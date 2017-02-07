@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RptDataSource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="NewQcoreDB">
+  <ConnectionProperties>
+    <Extension>SQL</Extension>
+    <ConnectString>Data Source=sap;Initial Catalog=NewQcoreDB</ConnectString>
+  </ConnectionProperties>
+  <DataSourceID>39e110bc-d0db-4c4a-8335-07a5a69c18cf</DataSourceID>
+</RptDataSource>
