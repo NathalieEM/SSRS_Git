@@ -22,7 +22,7 @@
         </QueryParameters>
         <CommandText>SELECT     DATEPART(year, assemblyEndTime) AS yearDate, DATEPART(QUARTER, assemblyEndTime) AS QuraterDate, CONVERT(nvarchar(5), DATEPART(month, 
                       assemblyEndTime)) AS MonthDate, DATEPART(week, assemblyEndTime) AS weekDate, CONVERT(date, assemblyEndTime) AS AssemblyDate, id, pumpSN, dateId, 
-                       lineId, line, comments, asseblyEmployee, EntranceReasonID, EntranceReason, NumberOfFailures, PumpType, 1 test, 2 test2, 3 test3
+                       lineId, line, comments, asseblyEmployee, EntranceReasonID, EntranceReason, NumberOfFailures, PumpType, 1 test, 2 test2
 
 
                   
@@ -102,10 +102,6 @@ WHERE     (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (En
         </Field>
         <Field Name="test2">
           <DataField>test2</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="test3">
-          <DataField>test3</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
       </Fields>
