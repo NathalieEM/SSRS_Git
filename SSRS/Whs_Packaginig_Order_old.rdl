@@ -26,6 +26,10 @@
   <DataSets />
   <Reports>
     <ProjectItem>
+      <Name>Copy of Whs_Packaginig_Order.rdl</Name>
+      <FullPath>Copy of Whs_Packaginig_Order.rdl</FullPath>
+    </ProjectItem>
+    <ProjectItem>
       <Name>Example.rdl</Name>
       <FullPath>Example.rdl</FullPath>
     </ProjectItem>
@@ -170,8 +174,16 @@
       <FullPath>TotalPumpspertimeECO.rdl</FullPath>
     </ProjectItem>
     <ProjectItem>
-      <Name>Whs_Packaginig_Order_0906.rdl</Name>
-      <FullPath>Whs_Packaginig_Order_0906.rdl</FullPath>
+      <Name>Whs_Packaginig_Order.rdl</Name>
+      <FullPath>Whs_Packaginig_Order.rdl</FullPath>
+    </ProjectItem>
+    <ProjectItem>
+      <Name>Whs_Packaginig_Order_BU.rdl</Name>
+      <FullPath>Whs_Packaginig_Order_BU.rdl</FullPath>
+    </ProjectItem>
+    <ProjectItem>
+      <Name>Whs_Packaginig_Order _nat.rdl</Name>
+      <FullPath>Whs_Packaginig_Order _nat.rdl</FullPath>
     </ProjectItem>
   </Reports>
   <Configurations>
@@ -180,7 +192,7 @@
       <Platform>Win32</Platform>
       <Options>
         <OutputPath>bin\Debug</OutputPath>
-        <TargetServerVersion>SSRS2016</TargetServerVersion>
+        <TargetServerVersion>SSRS2008R2</TargetServerVersion>
         <TargetServerURL>http://rptsrv:8181/Reportserver</TargetServerURL>
         <TargetFolder>SSRS</TargetFolder>
         <TargetDataSourceFolder>Data Sources</TargetDataSourceFolder>

@@ -19,88 +19,95 @@
           <QueryParameter Name="@ToDate">
             <Value>=Parameters!ToDate.Value</Value>
           </QueryParameter>
+          <QueryParameter Name="@entranceReason">
+            <Value>=Parameters!entranceReason.Value</Value>
+          </QueryParameter>
         </QueryParameters>
-        <CommandText>SELECT     DATEPART(year, assemblyEndTime) AS yearDate, DATEPART(QUARTER, assemblyEndTime) AS QuraterDate, CONVERT(nvarchar(5), DATEPART(month, 
-                      assemblyEndTime)) AS MonthDate, DATEPART(week, assemblyEndTime) AS weekDate, CONVERT(date, assemblyEndTime) AS AssemblyDate, id, pumpSN, dateId, 
-                       lineId, line, comments, asseblyEmployee, EntranceReasonID, EntranceReason, NumberOfFailures, PumpType, case when comments like N'%144%' then 1 else 0  end 
-					   'ECO'
+        <CommandText>select year(ftpProcedureEndTime) as 'YearDate',DATEPART(QUARTER,ftpProcedureEndTime) as 'QuarterDate',Month(ftpProcedureEndTime) as 'MonthDate',max(datepart(week,ftpProcedureEndTime)) as 'WeekDate'
+,max(convert(date,ftpProcedureEndTime)) as 'FtpDate',F.procedureTypeId,P.procedureTypeName as 'ProcedureName',F.pumpSN,PT.pumptypename as 'PumpType',
+F.totalPassedQty as 'Pass/Fail', max(ff.ftpid) ftpid,S.sourceName as 'EntranceReason'
+from dwh_fact_FtpProcedures F
+left join dwh_dim_ProcedureType  P 
+on F.procedureTypeId=P.procedureTypeId
+left join dwh_fact_Ftp FF on F.pumpSN=FF.pumpSN and F.sourceId=FF.sourceId 
+and 
+F.ftpId=FF.ftpId
+left join dwh_dim_pumptype pt on FF.PumpType=pt.PumpTypeid
+left join dwh_dim_Source S on FF.sourceId=S.sourceId
 
-
-
-                  
-             
-FROM         dwh_fact_ProductionAssembly
-WHERE     (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (EntranceReasonID IN ('13328', '13329'))</CommandText>
+where F.procedureTypeId in ('67567','56','62','272027','73','3187353')
+and CONVERT(date,(ftpProcedureEndTime)) between @FromDate and @ToDate
+--and pt.pumptypename='Generic Sapphire' and f.pumpSN='300193586'
+and sourceName in (@entranceReason)
+group by year(ftpProcedureEndTime),DATEPART(QUARTER,ftpProcedureEndTime) ,Month(ftpProcedureEndTime) 
+,F.procedureTypeId,P.procedureTypeName,F.pumpSN,PT.pumptypename ,
+F.totalPassedQty ,S.sourceName</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
         <Field Name="yearDate">
-          <DataField>yearDate</DataField>
+          <DataField>YearDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="QuraterDate">
-          <DataField>QuraterDate</DataField>
+        <Field Name="QuarterDate">
+          <DataField>QuarterDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="MonthDate">
           <DataField>MonthDate</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="weekDate">
-          <DataField>weekDate</DataField>
+          <DataField>WeekDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="AssemblyDate">
-          <DataField>AssemblyDate</DataField>
+        <Field Name="FtpDate">
+          <DataField>FtpDate</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
-        <Field Name="id">
-          <DataField>id</DataField>
+        <Field Name="procedureTypeId">
+          <DataField>procedureTypeId</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="ProcedureName">
+          <DataField>ProcedureName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
         <Field Name="pumpSN">
           <DataField>pumpSN</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="dateId">
-          <DataField>dateId</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="lineId">
-          <DataField>lineId</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="line">
-          <DataField>line</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="comments">
-          <DataField>comments</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="asseblyEmployee">
-          <DataField>asseblyEmployee</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="EntranceReasonID">
-          <DataField>EntranceReasonID</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="EntranceReason">
-          <DataField>EntranceReason</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="NumberOfFailures">
-          <DataField>NumberOfFailures</DataField>
+        <Field Name="Pass_Fail">
+          <DataField>Pass/Fail</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="PumpType">
           <DataField>PumpType</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="ECO">
-          <DataField>ECO</DataField>
+        <Field Name="ftpid">
+          <DataField>ftpid</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="EntranceReason">
+          <DataField>EntranceReason</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="Source">
+      <Query>
+        <DataSourceName>RPTSRV</DataSourceName>
+        <CommandText>select * from dwh_dim_Source</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="sourceId">
+          <DataField>sourceId</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="sourceName">
+          <DataField>sourceName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -114,108 +121,61 @@ WHERE     (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (En
           <QueryParameter Name="@ToDate">
             <Value>=Parameters!ToDate.Value</Value>
           </QueryParameter>
+          <QueryParameter Name="@entranceReason">
+            <Value>=Parameters!entranceReason.Value</Value>
+          </QueryParameter>
         </QueryParameters>
-        <CommandText>;with cteNew AS(
-SELECT  --EntranceReason, 
-convert(float,count(pumpSN)) as 'PumpCountNe'
-from dwh_fact_ProductionAssembly 
-where EntranceReason='New Device'
-and     (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (EntranceReasonID IN ('13328', '13329')))
---group by  EntranceReason)
-
-,
-CTERework AS (    
-SELECT  --EntranceReason, 
-convert(float,count(pumpSN)) as 'PumpCountRe'
-from dwh_fact_ProductionAssembly 
-where EntranceReason='Rework'            
---FROM  dwh_fact_ProductionAssembly
---WHERE 
-and    (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (EntranceReasonID IN ('13328', '13329'))
-group by  EntranceReason)
-
-select convert(decimal(18,2),(PumpCountRe/PumpCountNe)) from cteNew,CTERework</CommandText>
+        <CommandText>SELECT        YEAR(FF.ftpEndTime) AS 'YearDate', DATEPART(QUARTER, FF.ftpEndTime) AS 'QuarterDate', MONTH(FF.ftpEndTime) AS 'MonthDate', MAX(DATEPART(week, FF.ftpEndTime)) AS 'WeekDate', MAX(CONVERT(date, 
+                         FF.ftpEndTime)) AS 'FtpDate', FF.pumpSN, pt.pumpTypeName AS 'PumpType', FF.ftpPassFail AS 'Pass/Fail', MAX(FF.ftpId) AS ftpid, S.sourceName AS 'EntranceReason'
+FROM            dwh_fact_Ftp AS FF LEFT OUTER JOIN
+                         dwh_dim_PumpType AS pt ON FF.PumpType = pt.PumpTypeId LEFT OUTER JOIN
+                         dwh_dim_Source AS S ON FF.sourceId = S.sourceId
+WHERE        (CONVERT(date, FF.ftpEndTime) BETWEEN @FromDate AND @ToDate) AND (FF.ftpPassFail &lt;&gt; '2')
+and sourceName in (@entranceReason)
+GROUP BY YEAR(FF.ftpEndTime), DATEPART(QUARTER, FF.ftpEndTime), MONTH(FF.ftpEndTime), FF.pumpSN, pt.pumpTypeName, FF.ftpPassFail, S.sourceName
+ORDER BY 'FtpDate', FF.pumpSN</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
-        <Field Name="ID">
-          <DataField />
-          <rd:TypeName>System.Decimal</rd:TypeName>
-        </Field>
-      </Fields>
-    </DataSet>
-    <DataSet Name="DataSet3">
-      <Query>
-        <DataSourceName>RPTSRV</DataSourceName>
-        <QueryParameters>
-          <QueryParameter Name="@FromDate">
-            <Value>=Parameters!FromDate.Value</Value>
-          </QueryParameter>
-          <QueryParameter Name="@ToDate">
-            <Value>=Parameters!ToDate.Value</Value>
-          </QueryParameter>
-        </QueryParameters>
-        <CommandText>SELECT        pumpSN, EntranceReasonID, PumpType, PumpTypeID, comments, id, pumpSN AS Expr1, dateId, assemblyEndTime, lineId, line, comments AS Expr2, asseblyEmployee, EntranceReasonID AS Expr3, 
-                         EntranceReason, NumberOfFailures, assemblyStartTime, PumpType AS Expr4, PumpTypeID AS Expr5
-FROM            dwh_fact_ProductionAssembly
-WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate)</CommandText>
-      </Query>
-      <Fields>
-        <Field Name="id">
-          <DataField>id</DataField>
+        <Field Name="YearDate">
+          <DataField>YearDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="QuarterDate">
+          <DataField>QuarterDate</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="MonthDate">
+          <DataField>MonthDate</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="WeekDate">
+          <DataField>WeekDate</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="FtpDate">
+          <DataField>FtpDate</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
         </Field>
         <Field Name="pumpSN">
           <DataField>pumpSN</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="dateId">
-          <DataField>dateId</DataField>
+        <Field Name="PumpType">
+          <DataField>PumpType</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Pass_Fail">
+          <DataField>Pass/Fail</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="assemblyEndTime">
-          <DataField>assemblyEndTime</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
-        </Field>
-        <Field Name="lineId">
-          <DataField>lineId</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="line">
-          <DataField>line</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="comments">
-          <DataField>comments</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="asseblyEmployee">
-          <DataField>asseblyEmployee</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="EntranceReasonID">
-          <DataField>EntranceReasonID</DataField>
+        <Field Name="ftpid">
+          <DataField>ftpid</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="EntranceReason">
           <DataField>EntranceReason</DataField>
           <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="NumberOfFailures">
-          <DataField>NumberOfFailures</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="assemblyStartTime">
-          <DataField>assemblyStartTime</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
-        </Field>
-        <Field Name="PumpType">
-          <DataField>PumpType</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="PumpTypeID">
-          <DataField>PumpTypeID</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -230,7 +190,7 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                 <TablixCornerRow>
                   <TablixCornerCell>
                     <CellContents>
-                      <Textbox Name="Textbox152">
+                      <Textbox Name="Textbox120">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -238,19 +198,18 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                             <TextRuns>
                               <TextRun>
                                 <Value />
-                                <Style>
-                                  <FontFamily>Tahoma</FontFamily>
-                                </Style>
+                                <Style />
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox152</rd:DefaultName>
+                        <rd:DefaultName>Textbox120</rd:DefaultName>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -262,7 +221,7 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                   </TablixCornerCell>
                   <TablixCornerCell>
                     <CellContents>
-                      <Textbox Name="Textbox153">
+                      <Textbox Name="Textbox121">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -270,19 +229,18 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                             <TextRuns>
                               <TextRun>
                                 <Value />
-                                <Style>
-                                  <FontFamily>Tahoma</FontFamily>
-                                </Style>
+                                <Style />
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox153</rd:DefaultName>
+                        <rd:DefaultName>Textbox121</rd:DefaultName>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -294,7 +252,7 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                   </TablixCornerCell>
                   <TablixCornerCell>
                     <CellContents>
-                      <Textbox Name="Textbox154">
+                      <Textbox Name="Textbox122">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -302,19 +260,21 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                             <TextRuns>
                               <TextRun>
                                 <Value />
-                                <Style>
-                                  <FontFamily>Tahoma</FontFamily>
-                                </Style>
+                                <Style />
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox154</rd:DefaultName>
+                        <rd:DefaultName>Textbox122</rd:DefaultName>
+                        <Visibility>
+                          <Hidden>true</Hidden>
+                        </Visibility>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -326,7 +286,7 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                   </TablixCornerCell>
                   <TablixCornerCell>
                     <CellContents>
-                      <Textbox Name="Textbox155">
+                      <Textbox Name="Textbox123">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -334,19 +294,18 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                             <TextRuns>
                               <TextRun>
                                 <Value />
-                                <Style>
-                                  <FontFamily>Tahoma</FontFamily>
-                                </Style>
+                                <Style />
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox155</rd:DefaultName>
+                        <rd:DefaultName>Textbox123</rd:DefaultName>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -358,7 +317,7 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                   </TablixCornerCell>
                   <TablixCornerCell>
                     <CellContents>
-                      <Textbox Name="Textbox156">
+                      <Textbox Name="Textbox124">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -366,19 +325,18 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                             <TextRuns>
                               <TextRun>
                                 <Value />
-                                <Style>
-                                  <FontFamily>Tahoma</FontFamily>
-                                </Style>
+                                <Style />
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox156</rd:DefaultName>
+                        <rd:DefaultName>Textbox124</rd:DefaultName>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -390,7 +348,7 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                   </TablixCornerCell>
                   <TablixCornerCell>
                     <CellContents>
-                      <Textbox Name="Textbox157">
+                      <Textbox Name="Textbox125">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -398,19 +356,18 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                             <TextRuns>
                               <TextRun>
                                 <Value />
-                                <Style>
-                                  <FontFamily>Tahoma</FontFamily>
-                                </Style>
+                                <Style />
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox157</rd:DefaultName>
+                        <rd:DefaultName>Textbox125</rd:DefaultName>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -455,7 +412,6 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                         </Style>
                       </Textbox>
                       <ColSpan>6</ColSpan>
-                      <RowSpan>2</RowSpan>
                     </CellContents>
                   </TablixCornerCell>
                   <TablixCornerCell />
@@ -465,12 +421,192 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                   <TablixCornerCell />
                 </TablixCornerRow>
                 <TablixCornerRow>
-                  <TablixCornerCell />
-                  <TablixCornerCell />
-                  <TablixCornerCell />
-                  <TablixCornerCell />
-                  <TablixCornerCell />
-                  <TablixCornerCell />
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox42">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox42</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox43">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox43</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox44">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox44</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox45">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox45</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox46">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox46</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox47">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox47</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
                 </TablixCornerRow>
               </TablixCornerRows>
             </TablixCorner>
@@ -499,8 +635,6 @@ WHERE        (comments LIKE '%144%') AND (CONVERT(date, assemblyEndTime) BETWEEN
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
                                   <Style>
                                     <FontFamily>Tahoma</FontFamily>
-                                    <Color>=IIF(Count(Fields!pumpSN.Value)&lt;(Parameters!Yeild.Value*0.95)
-AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -510,29 +644,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>textbox2</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsDaily</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="line">
-                                      <Value>=Fields!line.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="pumpType">
-                                      <Value>=Fields!PumpType.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="Assemblydate">
-                                      <Value>=Fields!AssemblyDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
                           <Style>
                             <Border>
                               <Color>Silver</Color>
@@ -549,7 +660,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox150">
+                        <Textbox Name="Textbox98">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -557,64 +668,20 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
-                                  <ActionInfo>
-                                    <Actions>
-                                      <Action>
-                                        <Drillthrough>
-                                          <ReportName>Pumps</ReportName>
-                                          <Parameters>
-                                            <Parameter Name="entrancereason">
-                                              <Value>=Fields!EntranceReason.Value</Value>
-                                            </Parameter>
-                                            <Parameter Name="line">
-                                              <Value>=Fields!line.Value</Value>
-                                            </Parameter>
-                                            <Parameter Name="pumpType">
-                                              <Value>=Fields!PumpType.Value</Value>
-                                            </Parameter>
-                                            <Parameter Name="FromDate">
-                                              <Value>=Fields!AssemblyDate.Value</Value>
-                                            </Parameter>
-                                            <Parameter Name="ToDate">
-                                              <Value>=Fields!AssemblyDate.Value</Value>
-                                            </Parameter>
-                                          </Parameters>
-                                        </Drillthrough>
-                                      </Action>
-                                    </Actions>
-                                  </ActionInfo>
                                   <Style>
                                     <FontFamily>Tahoma</FontFamily>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox150</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsDailyTotalPerType</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="pumpType">
-                                      <Value>=Fields!PumpType.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="Assemblydate">
-                                      <Value>=Fields!AssemblyDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox98</rd:DefaultName>
                           <Style>
                             <Border>
-                              <Color>LightGrey</Color>
+                              <Color>Silver</Color>
                               <Style>Solid</Style>
                             </Border>
                             <PaddingLeft>2pt</PaddingLeft>
@@ -653,26 +720,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox20</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsDailyPerLine</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="line">
-                                      <Value>=Fields!line.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="Assemblydate">
-                                      <Value>=Fields!AssemblyDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -689,7 +736,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox36">
+                        <Textbox Name="Textbox99">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -699,30 +746,16 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
                                   <Style>
                                     <FontFamily>Tahoma</FontFamily>
+                                    <FontWeight>Normal</FontWeight>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox36</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsDailyTotal</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="Assemblydate">
-                                      <Value>=Fields!AssemblyDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox99</rd:DefaultName>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -763,35 +796,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox139</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsWeekly</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="line">
-                                      <Value>=Fields!line.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="WeekDate">
-                                      <Value>=Fields!weekDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -817,7 +821,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox159">
+                        <Textbox Name="Textbox100">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -830,40 +834,26 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox150</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsWeeklyTotal</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="WeekDate">
-                                      <Value>=Fields!weekDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox100</rd:DefaultName>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
+                              <Width>1.25pt</Width>
                             </Border>
+                            <BottomBorder>
+                              <Width>1pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Width>1pt</Width>
+                            </RightBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -899,35 +889,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox85</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsMonthlyTotalPerLine</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="line">
-                                      <Value>=Fields!line.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="MonthDate">
-                                      <Value>=Fields!MonthDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -943,7 +904,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox86">
+                        <Textbox Name="Textbox101">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -956,36 +917,12 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox86</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsMonthlyTotal</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="MonthDate">
-                                      <Value>=Fields!MonthDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox101</rd:DefaultName>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -1025,35 +962,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox18</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsQuarterlyTotalPerLine</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="QuarterDate">
-                                      <Value>=Fields!QuraterDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="line">
-                                      <Value>=Fields!line.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -1069,7 +977,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox19">
+                        <Textbox Name="Textbox102">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -1082,36 +990,12 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox19</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsQuarterlyTotal</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="QuarterDate">
-                                      <Value>=Fields!QuraterDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox102</rd:DefaultName>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -1151,32 +1035,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </Paragraph>
                           </Paragraphs>
                           <rd:DefaultName>Textbox26</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsYearlyTotalPerLine</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="line">
-                                      <Value>=Fields!line.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -1192,7 +1050,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox27">
+                        <Textbox Name="Textbox103">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -1205,33 +1063,12 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox27</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>PumpsYearlyTotal</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="YearDate">
-                                      <Value>=Fields!yearDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox103</rd:DefaultName>
                           <Style>
                             <Border>
                               <Style>Solid</Style>
@@ -1255,7 +1092,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                   <TablixHeader>
                     <Size>0.25in</Size>
                     <CellContents>
-                      <Textbox Name="Textbox158">
+                      <Textbox Name="Textbox126">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
@@ -1273,13 +1110,13 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             <Style />
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox158</rd:DefaultName>
+                        <rd:DefaultName>Textbox126</rd:DefaultName>
                         <Style>
                           <Border>
                             <Color>LightGrey</Color>
                             <Style>Solid</Style>
                           </Border>
-                          <BackgroundColor>#6e9eca</BackgroundColor>
+                          <BackgroundColor>SeaGreen</BackgroundColor>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
                           <PaddingTop>2pt</PaddingTop>
@@ -1290,27 +1127,27 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                   </TablixHeader>
                   <TablixMembers>
                     <TablixMember>
-                      <Group Name="matrix1_line">
+                      <Group Name="matrix1_PumpType">
                         <GroupExpressions>
-                          <GroupExpression>=Fields!line.Value</GroupExpression>
+                          <GroupExpression>=Fields!PumpType.Value</GroupExpression>
                         </GroupExpressions>
                       </Group>
                       <SortExpressions>
                         <SortExpression>
-                          <Value>=Fields!line.Value</Value>
+                          <Value>=Fields!PumpType.Value</Value>
                         </SortExpression>
                       </SortExpressions>
                       <TablixHeader>
                         <Size>0.21in</Size>
                         <CellContents>
-                          <Textbox Name="line">
+                          <Textbox Name="PumpType">
                             <CanGrow>true</CanGrow>
                             <KeepTogether>true</KeepTogether>
                             <Paragraphs>
                               <Paragraph>
                                 <TextRuns>
                                   <TextRun>
-                                    <Value>=Fields!line.Value</Value>
+                                    <Value>=Fields!PumpType.Value</Value>
                                     <Style>
                                       <FontFamily>Tahoma</FontFamily>
                                       <FontWeight>Bold</FontWeight>
@@ -1321,13 +1158,12 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                 <Style />
                               </Paragraph>
                             </Paragraphs>
-                            <rd:DefaultName>line</rd:DefaultName>
                             <Style>
                               <Border>
                                 <Color>LightGrey</Color>
                                 <Style>Solid</Style>
                               </Border>
-                              <BackgroundColor>#6e9eca</BackgroundColor>
+                              <BackgroundColor>SeaGreen</BackgroundColor>
                               <PaddingLeft>2pt</PaddingLeft>
                               <PaddingRight>2pt</PaddingRight>
                               <PaddingTop>2pt</PaddingTop>
@@ -1338,27 +1174,27 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                       </TablixHeader>
                       <TablixMembers>
                         <TablixMember>
-                          <Group Name="matrix1_EntranceReason">
+                          <Group Name="Pass_Fail">
                             <GroupExpressions>
-                              <GroupExpression>=Fields!EntranceReason.Value</GroupExpression>
+                              <GroupExpression>=Fields!Pass_Fail.Value</GroupExpression>
                             </GroupExpressions>
                           </Group>
                           <SortExpressions>
                             <SortExpression>
-                              <Value>=Fields!EntranceReason.Value</Value>
+                              <Value>=Fields!Pass_Fail.Value</Value>
                             </SortExpression>
                           </SortExpressions>
                           <TablixHeader>
-                            <Size>0.21in</Size>
+                            <Size>0.25in</Size>
                             <CellContents>
-                              <Textbox Name="EntranceReason">
+                              <Textbox Name="Pass_Fail">
                                 <CanGrow>true</CanGrow>
                                 <KeepTogether>true</KeepTogether>
                                 <Paragraphs>
                                   <Paragraph>
                                     <TextRuns>
                                       <TextRun>
-                                        <Value>=Fields!EntranceReason.Value</Value>
+                                        <Value>=IIF(Fields!Pass_Fail.Value=1,"Pass","Fail")</Value>
                                         <Style>
                                           <FontFamily>Tahoma</FontFamily>
                                           <FontWeight>Bold</FontWeight>
@@ -1369,7 +1205,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                     <Style />
                                   </Paragraph>
                                 </Paragraphs>
-                                <rd:DefaultName>EntranceReason</rd:DefaultName>
+                                <rd:DefaultName>Pass_Fail</rd:DefaultName>
                                 <Style>
                                   <Border>
                                     <Color>LightGrey</Color>
@@ -1387,8 +1223,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           <TablixMembers>
                             <TablixMember />
                           </TablixMembers>
-                          <DataElementOutput>Output</DataElementOutput>
-                          <KeepTogether>true</KeepTogether>
                         </TablixMember>
                       </TablixMembers>
                       <DataElementOutput>Output</DataElementOutput>
@@ -1396,27 +1230,27 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                   </TablixMembers>
                 </TablixMember>
                 <TablixMember>
-                  <Group Name="EntranceReason">
+                  <Group Name="Pass_Fail1">
                     <GroupExpressions>
-                      <GroupExpression>=Fields!EntranceReason.Value</GroupExpression>
+                      <GroupExpression>=Fields!Pass_Fail.Value</GroupExpression>
                     </GroupExpressions>
                   </Group>
                   <SortExpressions>
                     <SortExpression>
-                      <Value>=Fields!EntranceReason.Value</Value>
+                      <Value>=Fields!Pass_Fail.Value</Value>
                     </SortExpression>
                   </SortExpressions>
                   <TablixHeader>
                     <Size>0.25in</Size>
                     <CellContents>
-                      <Textbox Name="EntranceReason1">
+                      <Textbox Name="Pass_Fail1">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
                           <Paragraph>
                             <TextRuns>
                               <TextRun>
-                                <Value>=Fields!EntranceReason.Value</Value>
+                                <Value>=IIF(Fields!Pass_Fail.Value=1,"Pass","Fail")</Value>
                                 <Style>
                                   <FontFamily>Tahoma</FontFamily>
                                   <FontWeight>Bold</FontWeight>
@@ -1427,13 +1261,13 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             <Style />
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>EntranceReason1</rd:DefaultName>
+                        <rd:DefaultName>Pass_Fail1</rd:DefaultName>
                         <Style>
                           <Border>
                             <Color>LightGrey</Color>
                             <Style>Solid</Style>
                           </Border>
-                          <BackgroundColor>#6e9eca</BackgroundColor>
+                          <BackgroundColor>SeaGreen</BackgroundColor>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
                           <PaddingTop>2pt</PaddingTop>
@@ -1447,7 +1281,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                       <TablixHeader>
                         <Size>0.21in</Size>
                         <CellContents>
-                          <Textbox Name="Textbox148">
+                          <Textbox Name="Textbox96">
                             <CanGrow>true</CanGrow>
                             <KeepTogether>true</KeepTogether>
                             <Paragraphs>
@@ -1465,13 +1299,13 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                 <Style />
                               </Paragraph>
                             </Paragraphs>
-                            <rd:DefaultName>Textbox148</rd:DefaultName>
+                            <rd:DefaultName>Textbox96</rd:DefaultName>
                             <Style>
                               <Border>
                                 <Color>LightGrey</Color>
                                 <Style>Solid</Style>
                               </Border>
-                              <BackgroundColor>#6e9eca</BackgroundColor>
+                              <BackgroundColor>SeaGreen</BackgroundColor>
                               <PaddingLeft>2pt</PaddingLeft>
                               <PaddingRight>2pt</PaddingRight>
                               <PaddingTop>2pt</PaddingTop>
@@ -1483,16 +1317,16 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                       <TablixMembers>
                         <TablixMember>
                           <TablixHeader>
-                            <Size>0.21in</Size>
+                            <Size>0.25in</Size>
                             <CellContents>
-                              <Textbox Name="Textbox149">
+                              <Textbox Name="Textbox97">
                                 <CanGrow>true</CanGrow>
                                 <KeepTogether>true</KeepTogether>
                                 <Paragraphs>
                                   <Paragraph>
                                     <TextRuns>
                                       <TextRun>
-                                        <Value>Total</Value>
+                                        <Value />
                                         <Style>
                                           <FontFamily>Tahoma</FontFamily>
                                           <FontWeight>Bold</FontWeight>
@@ -1503,7 +1337,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                     <Style />
                                   </Paragraph>
                                 </Paragraphs>
-                                <rd:DefaultName>Textbox149</rd:DefaultName>
+                                <rd:DefaultName>Textbox97</rd:DefaultName>
                                 <Style>
                                   <Border>
                                     <Color>LightGrey</Color>
@@ -1565,7 +1399,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             <Color>LightGrey</Color>
                             <Style>Solid</Style>
                           </Border>
-                          <BackgroundColor>#6e9eca</BackgroundColor>
+                          <BackgroundColor>SeaGreen</BackgroundColor>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
                           <PaddingTop>2pt</PaddingTop>
@@ -1576,20 +1410,20 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                   </TablixHeader>
                   <TablixMembers>
                     <TablixMember>
-                      <Group Name="matrix1_QuraterDate">
+                      <Group Name="matrix1_QuarterDate">
                         <GroupExpressions>
-                          <GroupExpression>=Fields!QuraterDate.Value</GroupExpression>
+                          <GroupExpression>=Fields!QuarterDate.Value</GroupExpression>
                         </GroupExpressions>
                       </Group>
                       <SortExpressions>
                         <SortExpression>
-                          <Value>=Fields!QuraterDate.Value</Value>
+                          <Value>=Fields!QuarterDate.Value</Value>
                         </SortExpression>
                       </SortExpressions>
                       <TablixHeader>
                         <Size>1in</Size>
                         <CellContents>
-                          <Textbox Name="QuraterDate">
+                          <Textbox Name="QuarterDate">
                             <CanGrow>true</CanGrow>
                             <KeepTogether>true</KeepTogether>
                             <Paragraphs>
@@ -1604,7 +1438,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                     </Style>
                                   </TextRun>
                                   <TextRun>
-                                    <Value>=Fields!QuraterDate.Value</Value>
+                                    <Value>=Fields!QuarterDate.Value</Value>
                                     <Style>
                                       <FontFamily>Tahoma</FontFamily>
                                       <FontWeight>Bold</FontWeight>
@@ -1615,7 +1449,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                 <Style />
                               </Paragraph>
                             </Paragraphs>
-                            <rd:DefaultName>QuraterDate</rd:DefaultName>
                             <Style>
                               <Border>
                                 <Color>LightGrey</Color>
@@ -1744,27 +1577,27 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                               </TablixHeader>
                               <TablixMembers>
                                 <TablixMember>
-                                  <Group Name="matrix1_AssemblyDate">
+                                  <Group Name="matrix1_FtpDate">
                                     <GroupExpressions>
-                                      <GroupExpression>=Fields!AssemblyDate.Value</GroupExpression>
+                                      <GroupExpression>=Fields!FtpDate.Value</GroupExpression>
                                     </GroupExpressions>
                                   </Group>
                                   <SortExpressions>
                                     <SortExpression>
-                                      <Value>=Fields!AssemblyDate.Value</Value>
+                                      <Value>=Fields!FtpDate.Value</Value>
                                     </SortExpression>
                                   </SortExpressions>
                                   <TablixHeader>
                                     <Size>1in</Size>
                                     <CellContents>
-                                      <Textbox Name="AssemblyDate">
+                                      <Textbox Name="FtpDate">
                                         <CanGrow>true</CanGrow>
                                         <KeepTogether>true</KeepTogether>
                                         <Paragraphs>
                                           <Paragraph>
                                             <TextRuns>
                                               <TextRun>
-                                                <Value>=Fields!AssemblyDate.Value</Value>
+                                                <Value>=Fields!FtpDate.Value</Value>
                                                 <Style>
                                                   <FontFamily>Tahoma</FontFamily>
                                                   <FontWeight>Bold</FontWeight>
@@ -1776,7 +1609,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                             <Style />
                                           </Paragraph>
                                         </Paragraphs>
-                                        <rd:DefaultName>AssemblyDate</rd:DefaultName>
                                         <Style>
                                           <Border>
                                             <Color>LightGrey</Color>
@@ -1793,27 +1625,27 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                   </TablixHeader>
                                   <TablixMembers>
                                     <TablixMember>
-                                      <Group Name="matrix1_PumpType">
+                                      <Group Name="matrix1_ProcedureName">
                                         <GroupExpressions>
-                                          <GroupExpression>=Fields!PumpType.Value</GroupExpression>
+                                          <GroupExpression>=Fields!ProcedureName.Value</GroupExpression>
                                         </GroupExpressions>
                                       </Group>
                                       <SortExpressions>
                                         <SortExpression>
-                                          <Value>=Fields!PumpType.Value</Value>
+                                          <Value>=Fields!ProcedureName.Value</Value>
                                         </SortExpression>
                                       </SortExpressions>
                                       <TablixHeader>
                                         <Size>1in</Size>
                                         <CellContents>
-                                          <Textbox Name="PumpType">
+                                          <Textbox Name="ProcedureName">
                                             <CanGrow>true</CanGrow>
                                             <KeepTogether>true</KeepTogether>
                                             <Paragraphs>
                                               <Paragraph>
                                                 <TextRuns>
                                                   <TextRun>
-                                                    <Value>=Fields!PumpType.Value</Value>
+                                                    <Value>=Fields!ProcedureName.Value</Value>
                                                     <Style>
                                                       <FontFamily>Tahoma</FontFamily>
                                                       <FontWeight>Bold</FontWeight>
@@ -1824,7 +1656,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                                 <Style />
                                               </Paragraph>
                                             </Paragraphs>
-                                            <rd:DefaultName>PumpType</rd:DefaultName>
                                             <Style>
                                               <Border>
                                                 <Color>LightGrey</Color>
@@ -1841,7 +1672,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                                       </TablixHeader>
                                       <Visibility>
                                         <Hidden>true</Hidden>
-                                        <ToggleItem>AssemblyDate</ToggleItem>
+                                        <ToggleItem>FtpDate</ToggleItem>
                                       </Visibility>
                                       <DataElementOutput>Output</DataElementOutput>
                                       <KeepTogether>true</KeepTogether>
@@ -2097,7 +1928,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                             </TablixMember>
                           </TablixMembers>
                           <Visibility>
-                            <ToggleItem>QuraterDate</ToggleItem>
+                            <ToggleItem>QuarterDate</ToggleItem>
                           </Visibility>
                           <DataElementOutput>Output</DataElementOutput>
                         </TablixMember>
@@ -2474,7 +2305,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
             <RepeatRowHeaders>true</RepeatRowHeaders>
             <DataSetName>DataSet1</DataSetName>
             <Top>0.36in</Top>
-            <Height>2.13in</Height>
+            <Height>2.17in</Height>
             <Width>8in</Width>
             <Style />
           </Tablix>
@@ -2485,12 +2316,12 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
               <Paragraph>
                 <TextRuns>
                   <TextRun>
-                    <Value>Pumps Status</Value>
+                    <Value>Pumps Status FTP </Value>
                     <Style>
                       <FontFamily>Tahoma</FontFamily>
                       <FontSize>20pt</FontSize>
                       <FontWeight>Bold</FontWeight>
-                      <Color>SteelBlue</Color>
+                      <Color>SeaGreen</Color>
                     </Style>
                   </TextRun>
                 </TextRuns>
@@ -2502,15 +2333,175 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
             <Width>7in</Width>
             <ZIndex>1</ZIndex>
             <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
               <PaddingLeft>2pt</PaddingLeft>
               <PaddingRight>2pt</PaddingRight>
               <PaddingTop>2pt</PaddingTop>
               <PaddingBottom>2pt</PaddingBottom>
             </Style>
           </Textbox>
-          <Tablix Name="Tablix2">
+          <Tablix Name="matrix2">
             <TablixCorner>
               <TablixCornerRows>
+                <TablixCornerRow>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox167">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox167</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox168">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox168</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox169">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox169</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox170">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox170</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox171">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox171</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                </TablixCornerRow>
                 <TablixCornerRow>
                   <TablixCornerCell>
                     <CellContents>
@@ -2521,26 +2512,184 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           <Paragraph>
                             <TextRuns>
                               <TextRun>
-                                <Value>Rework Vs New: </Value>
-                                <Style>
-                                  <Format>0.00%</Format>
-                                </Style>
-                              </TextRun>
-                              <TextRun>
-                                <Value>=Sum(Fields!ID.Value, "DataSet2")</Value>
+                                <Value />
                                 <Style>
                                   <Format>0.00%</Format>
                                 </Style>
                               </TextRun>
                             </TextRuns>
-                            <Style />
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>Textbox40</rd:DefaultName>
+                        <rd:DefaultName>Textbox35</rd:DefaultName>
+                        <ZIndex>3</ZIndex>
                         <Style>
                           <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                      <ColSpan>5</ColSpan>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell />
+                  <TablixCornerCell />
+                  <TablixCornerCell />
+                  <TablixCornerCell />
+                </TablixCornerRow>
+                <TablixCornerRow>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox48">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox42</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox49">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox43</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox50">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox44</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox51">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox45</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixCornerCell>
+                  <TablixCornerCell>
+                    <CellContents>
+                      <Textbox Name="Textbox52">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style />
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Left</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox46</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
                           </Border>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
@@ -2556,9 +2705,6 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
             <TablixBody>
               <TablixColumns>
                 <TablixColumn>
-                  <Width>0.96875in</Width>
-                </TablixColumn>
-                <TablixColumn>
                   <Width>1in</Width>
                 </TablixColumn>
                 <TablixColumn>
@@ -2567,11 +2713,11 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
               </TablixColumns>
               <TablixRows>
                 <TablixRow>
-                  <Height>0.26041in</Height>
+                  <Height>0.25in</Height>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="pumpSN">
+                        <Textbox Name="Textbox37">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -2579,29 +2725,34 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
-                                  <Style />
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <FontWeight>Normal</FontWeight>
+                                  </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>pumpSN</rd:DefaultName>
+                          <rd:DefaultName>Textbox20</rd:DefaultName>
                           <ActionInfo>
                             <Actions>
                               <Action>
                                 <Drillthrough>
-                                  <ReportName>TotalPumpspertime</ReportName>
+                                  <ReportName>FTPPumpsDailyPumpType</ReportName>
                                   <Parameters>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
+                                    <Parameter Name="FtpDate">
+                                      <Value>=Fields!FtpDate.Value</Value>
                                     </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
+                                    <Parameter Name="FtpPassFail">
+                                      <Value>=Fields!Pass_Fail.Value</Value>
                                     </Parameter>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
+                                    <Parameter Name="entranceReason">
+                                      <Value>=Parameters!entranceReason.Value</Value>
                                     </Parameter>
-                                    <Parameter Name="pumpType">
+                                    <Parameter Name="PumpType">
                                       <Value>=Fields!PumpType.Value</Value>
                                     </Parameter>
                                   </Parameters>
@@ -2611,8 +2762,8 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           </ActionInfo>
                           <Style>
                             <Border>
-                              <Color>LightGrey</Color>
                               <Style>Solid</Style>
+                              <Width>1.25pt</Width>
                             </Border>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
@@ -2621,64 +2772,11 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           </Style>
                         </Textbox>
                       </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="ECO">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Sum(Fields!ECO.Value)</Value>
-                                  <Style />
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>ECO</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>TotalPumpspertimeECO</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="pumpType">
-                                      <Value>=Fields!PumpType.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                              <Style>Solid</Style>
-                            </Border>
-                            <BackgroundColor>Silver</BackgroundColor>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox44">
+                        <Textbox Name="Textbox162">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -2686,30 +2784,32 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
-                                  <Style />
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                    <FontWeight>Normal</FontWeight>
+                                  </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox44</rd:DefaultName>
+                          <rd:DefaultName>Textbox162</rd:DefaultName>
                           <ActionInfo>
                             <Actions>
                               <Action>
                                 <Drillthrough>
-                                  <ReportName>TotalofPumpspertimeType</ReportName>
+                                  <ReportName>FTPPumpsDaily</ReportName>
                                   <Parameters>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
+                                    <Parameter Name="FtpDate">
+                                      <Value>=Fields!FtpDate.Value</Value>
                                     </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
+                                    <Parameter Name="FtpPassFail">
+                                      <Value>=Fields!Pass_Fail.Value</Value>
                                     </Parameter>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="pumpType">
-                                      <Value>=Fields!PumpType.Value</Value>
+                                    <Parameter Name="entranceReason">
+                                      <Value>=Parameters!entranceReason.Value</Value>
                                     </Parameter>
                                   </Parameters>
                                 </Drillthrough>
@@ -2718,8 +2818,8 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           </ActionInfo>
                           <Style>
                             <Border>
-                              <Color>LightGrey</Color>
                               <Style>Solid</Style>
+                              <Width>1.25pt</Width>
                             </Border>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
@@ -2728,6 +2828,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           </Style>
                         </Textbox>
                       </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
                     </TablixCell>
                   </TablixCells>
                 </TablixRow>
@@ -2736,7 +2837,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                   <TablixCells>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox30">
+                        <Textbox Name="Textbox142">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -2744,38 +2845,31 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
-                                  <Style />
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox30</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>TotalPumpsEntranceReasonNoEco</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox139</rd:DefaultName>
                           <Style>
                             <Border>
-                              <Color>LightGrey</Color>
                               <Style>Solid</Style>
+                              <Width>1.25pt</Width>
                             </Border>
+                            <BottomBorder>
+                              <Width>1pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Width>1pt</Width>
+                            </RightBorder>
                             <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>2pt</PaddingRight>
                             <PaddingTop>2pt</PaddingTop>
@@ -2783,61 +2877,11 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           </Style>
                         </Textbox>
                       </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox104">
-                          <CanGrow>true</CanGrow>
-                          <KeepTogether>true</KeepTogether>
-                          <Paragraphs>
-                            <Paragraph>
-                              <TextRuns>
-                                <TextRun>
-                                  <Value>=Sum(Fields!ECO.Value)</Value>
-                                  <Style />
-                                </TextRun>
-                              </TextRuns>
-                              <Style />
-                            </Paragraph>
-                          </Paragraphs>
-                          <rd:DefaultName>Textbox104</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>TotalPumpsEntranceReasonECO</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="entrancereason">
-                                      <Value>=Fields!EntranceReason.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
-                          <Style>
-                            <Border>
-                              <Color>LightGrey</Color>
-                              <Style>Solid</Style>
-                            </Border>
-                            <BackgroundColor>Silver</BackgroundColor>
-                            <PaddingLeft>2pt</PaddingLeft>
-                            <PaddingRight>2pt</PaddingRight>
-                            <PaddingTop>2pt</PaddingTop>
-                            <PaddingBottom>2pt</PaddingBottom>
-                          </Style>
-                        </Textbox>
-                      </CellContents>
-                    </TablixCell>
-                    <TablixCell>
-                      <CellContents>
-                        <Textbox Name="Textbox45">
+                        <Textbox Name="Textbox163">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -2845,33 +2889,68 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Count(Fields!pumpSN.Value)</Value>
-                                  <Style />
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
                                 </TextRun>
                               </TextRuns>
-                              <Style />
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox45</rd:DefaultName>
-                          <ActionInfo>
-                            <Actions>
-                              <Action>
-                                <Drillthrough>
-                                  <ReportName>TotalPumps</ReportName>
-                                  <Parameters>
-                                    <Parameter Name="FromDate">
-                                      <Value>=Parameters!FromDate.Value</Value>
-                                    </Parameter>
-                                    <Parameter Name="ToDate">
-                                      <Value>=Parameters!ToDate.Value</Value>
-                                    </Parameter>
-                                  </Parameters>
-                                </Drillthrough>
-                              </Action>
-                            </Actions>
-                          </ActionInfo>
+                          <rd:DefaultName>Textbox163</rd:DefaultName>
                           <Style>
                             <Border>
-                              <Color>LightGrey</Color>
+                              <Style>Solid</Style>
+                              <Width>1.25pt</Width>
+                            </Border>
+                            <BottomBorder>
+                              <Width>1pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Width>1pt</Width>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.25in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox89">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Count(Fields!pumpSN.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox85</rd:DefaultName>
+                          <Style>
+                            <Border>
                               <Style>Solid</Style>
                             </Border>
                             <PaddingLeft>2pt</PaddingLeft>
@@ -2881,6 +2960,187 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                           </Style>
                         </Textbox>
                       </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox164">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Count(Fields!pumpSN.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox164</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.25in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox38">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Count(Fields!pumpSN.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox18</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox165">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Count(Fields!pumpSN.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox165</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.25in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox39">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Count(Fields!pumpSN.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox26</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox166">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Count(Fields!pumpSN.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Tahoma</FontFamily>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox166</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                      <DataElementOutput>Output</DataElementOutput>
                     </TablixCell>
                   </TablixCells>
                 </TablixRow>
@@ -2889,43 +3149,81 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
             <TablixColumnHierarchy>
               <TablixMembers>
                 <TablixMember>
-                  <Group Name="EntranceReason1">
-                    <GroupExpressions>
-                      <GroupExpression>=Fields!EntranceReason.Value</GroupExpression>
-                    </GroupExpressions>
-                  </Group>
-                  <SortExpressions>
-                    <SortExpression>
-                      <Value>=Fields!EntranceReason.Value</Value>
-                    </SortExpression>
-                  </SortExpressions>
+                  <TablixHeader>
+                    <Size>0.25in</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox172">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value />
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style />
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox172</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>SeaGreen</BackgroundColor>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
                   <TablixMembers>
                     <TablixMember>
+                      <Group Name="matrix1_PumpType2">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!PumpType.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!PumpType.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
                       <TablixHeader>
-                        <Size>0.25in</Size>
+                        <Size>0.21in</Size>
                         <CellContents>
-                          <Textbox Name="Textbox9">
+                          <Textbox Name="PumpType2">
                             <CanGrow>true</CanGrow>
                             <KeepTogether>true</KeepTogether>
                             <Paragraphs>
                               <Paragraph>
                                 <TextRuns>
                                   <TextRun>
-                                    <Value>=Fields!EntranceReason.Value</Value>
-                                    <Style />
+                                    <Value>=Fields!PumpType.Value</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
                                   </TextRun>
                                 </TextRuns>
-                                <Style>
-                                  <TextAlign>Right</TextAlign>
-                                </Style>
+                                <Style />
                               </Paragraph>
                             </Paragraphs>
-                            <rd:DefaultName>Textbox9</rd:DefaultName>
                             <Style>
                               <Border>
                                 <Color>LightGrey</Color>
                                 <Style>Solid</Style>
                               </Border>
+                              <BackgroundColor>SeaGreen</BackgroundColor>
                               <PaddingLeft>2pt</PaddingLeft>
                               <PaddingRight>2pt</PaddingRight>
                               <PaddingTop>2pt</PaddingTop>
@@ -2936,51 +3234,138 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                       </TablixHeader>
                       <TablixMembers>
                         <TablixMember>
-                          <Group Name="ECO">
+                          <Group Name="Pass_Fail2">
                             <GroupExpressions>
-                              <GroupExpression>=Fields!ECO.Value</GroupExpression>
+                              <GroupExpression>=Fields!Pass_Fail.Value</GroupExpression>
                             </GroupExpressions>
                           </Group>
                           <SortExpressions>
                             <SortExpression>
-                              <Value>=Fields!ECO.Value</Value>
+                              <Value>=Fields!Pass_Fail.Value</Value>
                             </SortExpression>
                           </SortExpressions>
+                          <TablixHeader>
+                            <Size>0.25in</Size>
+                            <CellContents>
+                              <Textbox Name="Pass_Fail2">
+                                <CanGrow>true</CanGrow>
+                                <KeepTogether>true</KeepTogether>
+                                <Paragraphs>
+                                  <Paragraph>
+                                    <TextRuns>
+                                      <TextRun>
+                                        <Value>=IIF(Fields!Pass_Fail.Value = 1, "Pass", "Fail")</Value>
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>White</Color>
+                                        </Style>
+                                      </TextRun>
+                                    </TextRuns>
+                                    <Style />
+                                  </Paragraph>
+                                </Paragraphs>
+                                <rd:DefaultName>Pass_Fail</rd:DefaultName>
+                                <Style>
+                                  <Border>
+                                    <Color>LightGrey</Color>
+                                    <Style>Solid</Style>
+                                  </Border>
+                                  <BackgroundColor>SlateGray</BackgroundColor>
+                                  <PaddingLeft>2pt</PaddingLeft>
+                                  <PaddingRight>2pt</PaddingRight>
+                                  <PaddingTop>2pt</PaddingTop>
+                                  <PaddingBottom>2pt</PaddingBottom>
+                                </Style>
+                              </Textbox>
+                            </CellContents>
+                          </TablixHeader>
                           <TablixMembers>
                             <TablixMember />
                           </TablixMembers>
-                          <Visibility>
-                            <Hidden>=Fields!ECO.Value=1</Hidden>
-                          </Visibility>
                         </TablixMember>
                       </TablixMembers>
+                      <DataElementOutput>Output</DataElementOutput>
                     </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="Pass_Fail3">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!Pass_Fail.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!Pass_Fail.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixHeader>
+                    <Size>0.25in</Size>
+                    <CellContents>
+                      <Textbox Name="Pass_Fail3">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=IIF(Fields!Pass_Fail.Value = 1, "Pass", "Fail")</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style />
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Pass_Fail3</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>SeaGreen</BackgroundColor>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
                     <TablixMember>
                       <TablixHeader>
-                        <Size>0.25in</Size>
+                        <Size>0.21in</Size>
                         <CellContents>
-                          <Textbox Name="Textbox102">
+                          <Textbox Name="Textbox160">
                             <CanGrow>true</CanGrow>
                             <KeepTogether>true</KeepTogether>
                             <Paragraphs>
                               <Paragraph>
                                 <TextRuns>
                                   <TextRun>
-                                    <Value>ECO 2015-144</Value>
-                                    <Style />
+                                    <Value>Total</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
                                   </TextRun>
                                 </TextRuns>
-                                <Style>
-                                  <TextAlign>Left</TextAlign>
-                                </Style>
+                                <Style />
                               </Paragraph>
                             </Paragraphs>
-                            <rd:DefaultName>Textbox102</rd:DefaultName>
+                            <rd:DefaultName>Textbox160</rd:DefaultName>
                             <Style>
                               <Border>
                                 <Color>LightGrey</Color>
                                 <Style>Solid</Style>
                               </Border>
+                              <BackgroundColor>SeaGreen</BackgroundColor>
                               <PaddingLeft>2pt</PaddingLeft>
                               <PaddingRight>2pt</PaddingRight>
                               <PaddingTop>2pt</PaddingTop>
@@ -2990,45 +3375,46 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                         </CellContents>
                       </TablixHeader>
                       <TablixMembers>
-                        <TablixMember />
+                        <TablixMember>
+                          <TablixHeader>
+                            <Size>0.25in</Size>
+                            <CellContents>
+                              <Textbox Name="Textbox161">
+                                <CanGrow>true</CanGrow>
+                                <KeepTogether>true</KeepTogether>
+                                <Paragraphs>
+                                  <Paragraph>
+                                    <TextRuns>
+                                      <TextRun>
+                                        <Value />
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>White</Color>
+                                        </Style>
+                                      </TextRun>
+                                    </TextRuns>
+                                    <Style />
+                                  </Paragraph>
+                                </Paragraphs>
+                                <rd:DefaultName>Textbox161</rd:DefaultName>
+                                <Style>
+                                  <Border>
+                                    <Color>LightGrey</Color>
+                                    <Style>Solid</Style>
+                                  </Border>
+                                  <BackgroundColor>SlateGray</BackgroundColor>
+                                  <PaddingLeft>2pt</PaddingLeft>
+                                  <PaddingRight>2pt</PaddingRight>
+                                  <PaddingTop>2pt</PaddingTop>
+                                  <PaddingBottom>2pt</PaddingBottom>
+                                </Style>
+                              </Textbox>
+                            </CellContents>
+                          </TablixHeader>
+                        </TablixMember>
                       </TablixMembers>
                     </TablixMember>
-                  </TablixMembers>
-                </TablixMember>
-                <TablixMember>
-                  <TablixHeader>
-                    <Size>0.25in</Size>
-                    <CellContents>
-                      <Textbox Name="Textbox42">
-                        <CanGrow>true</CanGrow>
-                        <KeepTogether>true</KeepTogether>
-                        <Paragraphs>
-                          <Paragraph>
-                            <TextRuns>
-                              <TextRun>
-                                <Value>Total</Value>
-                                <Style />
-                              </TextRun>
-                            </TextRuns>
-                            <Style />
-                          </Paragraph>
-                        </Paragraphs>
-                        <rd:DefaultName>Textbox42</rd:DefaultName>
-                        <Style>
-                          <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
-                          </Border>
-                          <PaddingLeft>2pt</PaddingLeft>
-                          <PaddingRight>2pt</PaddingRight>
-                          <PaddingTop>2pt</PaddingTop>
-                          <PaddingBottom>2pt</PaddingBottom>
-                        </Style>
-                      </Textbox>
-                    </CellContents>
-                  </TablixHeader>
-                  <TablixMembers>
-                    <TablixMember />
                   </TablixMembers>
                 </TablixMember>
               </TablixMembers>
@@ -3036,39 +3422,44 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
             <TablixRowHierarchy>
               <TablixMembers>
                 <TablixMember>
-                  <Group Name="PumpType">
+                  <Group Name="matrix2_yearDate2">
                     <GroupExpressions>
-                      <GroupExpression>=Fields!PumpType.Value</GroupExpression>
+                      <GroupExpression>=Fields!YearDate.Value</GroupExpression>
                     </GroupExpressions>
                   </Group>
                   <SortExpressions>
                     <SortExpression>
-                      <Value>=Fields!PumpType.Value</Value>
+                      <Value>=Fields!YearDate.Value</Value>
                     </SortExpression>
                   </SortExpressions>
                   <TablixHeader>
-                    <Size>2.22917in</Size>
+                    <Size>1in</Size>
                     <CellContents>
-                      <Textbox Name="PumpType1">
+                      <Textbox Name="yearDate2">
                         <CanGrow>true</CanGrow>
                         <KeepTogether>true</KeepTogether>
                         <Paragraphs>
                           <Paragraph>
                             <TextRuns>
                               <TextRun>
-                                <Value>=Fields!PumpType.Value</Value>
-                                <Style />
+                                <Value>=Fields!YearDate.Value</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
                               </TextRun>
                             </TextRuns>
                             <Style />
                           </Paragraph>
                         </Paragraphs>
-                        <rd:DefaultName>PumpType1</rd:DefaultName>
+                        <rd:DefaultName>yearDate</rd:DefaultName>
                         <Style>
                           <Border>
                             <Color>LightGrey</Color>
                             <Style>Solid</Style>
                           </Border>
+                          <BackgroundColor>SeaGreen</BackgroundColor>
                           <PaddingLeft>2pt</PaddingLeft>
                           <PaddingRight>2pt</PaddingRight>
                           <PaddingTop>2pt</PaddingTop>
@@ -3078,59 +3469,672 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
                     </CellContents>
                   </TablixHeader>
                   <TablixMembers>
-                    <TablixMember />
-                  </TablixMembers>
-                </TablixMember>
-                <TablixMember>
-                  <TablixHeader>
-                    <Size>2.22917in</Size>
-                    <CellContents>
-                      <Textbox Name="Textbox29">
-                        <CanGrow>true</CanGrow>
-                        <KeepTogether>true</KeepTogether>
-                        <Paragraphs>
-                          <Paragraph>
-                            <TextRuns>
-                              <TextRun>
-                                <Value>Total</Value>
+                    <TablixMember>
+                      <Group Name="matrix2_QuarterDate2">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!QuarterDate.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!QuarterDate.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixHeader>
+                        <Size>1in</Size>
+                        <CellContents>
+                          <Textbox Name="QuarterDate2">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>Quarter:</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                  <TextRun>
+                                    <Value>=Fields!QuarterDate.Value</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
                                 <Style />
-                              </TextRun>
-                            </TextRuns>
-                            <Style />
-                          </Paragraph>
-                        </Paragraphs>
-                        <rd:DefaultName>Textbox29</rd:DefaultName>
-                        <Style>
-                          <Border>
-                            <Color>LightGrey</Color>
-                            <Style>Solid</Style>
-                          </Border>
-                          <PaddingLeft>2pt</PaddingLeft>
-                          <PaddingRight>2pt</PaddingRight>
-                          <PaddingTop>2pt</PaddingTop>
-                          <PaddingBottom>2pt</PaddingBottom>
-                        </Style>
-                      </Textbox>
-                    </CellContents>
-                  </TablixHeader>
-                  <TablixMembers>
-                    <TablixMember />
+                              </Paragraph>
+                            </Paragraphs>
+                            <Style>
+                              <Border>
+                                <Color>LightGrey</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>SlateGray</BackgroundColor>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                      <TablixMembers>
+                        <TablixMember>
+                          <Group Name="matrix2_MonthDate2">
+                            <GroupExpressions>
+                              <GroupExpression>=Fields!MonthDate.Value</GroupExpression>
+                            </GroupExpressions>
+                          </Group>
+                          <SortExpressions>
+                            <SortExpression>
+                              <Value>=Fields!MonthDate.Value</Value>
+                            </SortExpression>
+                          </SortExpressions>
+                          <TablixHeader>
+                            <Size>1in</Size>
+                            <CellContents>
+                              <Textbox Name="MonthDate2">
+                                <CanGrow>true</CanGrow>
+                                <KeepTogether>true</KeepTogether>
+                                <Paragraphs>
+                                  <Paragraph>
+                                    <TextRuns>
+                                      <TextRun>
+                                        <Value>Month:</Value>
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>White</Color>
+                                        </Style>
+                                      </TextRun>
+                                      <TextRun>
+                                        <Value>=Fields!MonthDate.Value</Value>
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>White</Color>
+                                        </Style>
+                                      </TextRun>
+                                    </TextRuns>
+                                    <Style />
+                                  </Paragraph>
+                                </Paragraphs>
+                                <rd:DefaultName>MonthDate</rd:DefaultName>
+                                <Style>
+                                  <Border>
+                                    <Color>LightGrey</Color>
+                                    <Style>Solid</Style>
+                                  </Border>
+                                  <BackgroundColor>#8fa0b0</BackgroundColor>
+                                  <PaddingLeft>2pt</PaddingLeft>
+                                  <PaddingRight>2pt</PaddingRight>
+                                  <PaddingTop>2pt</PaddingTop>
+                                  <PaddingBottom>2pt</PaddingBottom>
+                                </Style>
+                              </Textbox>
+                            </CellContents>
+                          </TablixHeader>
+                          <TablixMembers>
+                            <TablixMember>
+                              <Group Name="matrix2_weekDate2">
+                                <GroupExpressions>
+                                  <GroupExpression>=Fields!WeekDate.Value</GroupExpression>
+                                </GroupExpressions>
+                              </Group>
+                              <SortExpressions>
+                                <SortExpression>
+                                  <Value>=Fields!WeekDate.Value</Value>
+                                </SortExpression>
+                              </SortExpressions>
+                              <TablixHeader>
+                                <Size>1in</Size>
+                                <CellContents>
+                                  <Textbox Name="weekDate2">
+                                    <CanGrow>true</CanGrow>
+                                    <KeepTogether>true</KeepTogether>
+                                    <Paragraphs>
+                                      <Paragraph>
+                                        <TextRuns>
+                                          <TextRun>
+                                            <Value>Week:</Value>
+                                            <Style>
+                                              <FontFamily>Tahoma</FontFamily>
+                                              <FontWeight>Bold</FontWeight>
+                                              <Color>White</Color>
+                                            </Style>
+                                          </TextRun>
+                                        </TextRuns>
+                                        <Style />
+                                      </Paragraph>
+                                      <Paragraph>
+                                        <TextRuns>
+                                          <TextRun>
+                                            <Value>=Fields!WeekDate.Value</Value>
+                                            <Style>
+                                              <FontFamily>Tahoma</FontFamily>
+                                              <FontWeight>Bold</FontWeight>
+                                              <Color>White</Color>
+                                            </Style>
+                                          </TextRun>
+                                        </TextRuns>
+                                        <Style />
+                                      </Paragraph>
+                                    </Paragraphs>
+                                    <rd:DefaultName>weekDate</rd:DefaultName>
+                                    <Style>
+                                      <Border>
+                                        <Color>LightGrey</Color>
+                                        <Style>Solid</Style>
+                                      </Border>
+                                      <BackgroundColor>#8fa0b0</BackgroundColor>
+                                      <PaddingLeft>2pt</PaddingLeft>
+                                      <PaddingRight>2pt</PaddingRight>
+                                      <PaddingTop>2pt</PaddingTop>
+                                      <PaddingBottom>2pt</PaddingBottom>
+                                    </Style>
+                                  </Textbox>
+                                </CellContents>
+                              </TablixHeader>
+                              <TablixMembers>
+                                <TablixMember>
+                                  <Group Name="matrix2_FtpDate2">
+                                    <GroupExpressions>
+                                      <GroupExpression>=Fields!FtpDate.Value</GroupExpression>
+                                    </GroupExpressions>
+                                  </Group>
+                                  <SortExpressions>
+                                    <SortExpression>
+                                      <Value>=Fields!FtpDate.Value</Value>
+                                    </SortExpression>
+                                  </SortExpressions>
+                                  <TablixHeader>
+                                    <Size>1in</Size>
+                                    <CellContents>
+                                      <Textbox Name="FtpDate2">
+                                        <CanGrow>true</CanGrow>
+                                        <KeepTogether>true</KeepTogether>
+                                        <Paragraphs>
+                                          <Paragraph>
+                                            <TextRuns>
+                                              <TextRun>
+                                                <Value>=Fields!FtpDate.Value</Value>
+                                                <Style>
+                                                  <FontFamily>Tahoma</FontFamily>
+                                                  <FontWeight>Bold</FontWeight>
+                                                  <Format>d/M/yy</Format>
+                                                  <Color>White</Color>
+                                                </Style>
+                                              </TextRun>
+                                            </TextRuns>
+                                            <Style />
+                                          </Paragraph>
+                                        </Paragraphs>
+                                        <Style>
+                                          <Border>
+                                            <Color>LightGrey</Color>
+                                            <Style>Solid</Style>
+                                          </Border>
+                                          <BackgroundColor>#8fa0b0</BackgroundColor>
+                                          <PaddingLeft>2pt</PaddingLeft>
+                                          <PaddingRight>2pt</PaddingRight>
+                                          <PaddingTop>2pt</PaddingTop>
+                                          <PaddingBottom>2pt</PaddingBottom>
+                                        </Style>
+                                      </Textbox>
+                                    </CellContents>
+                                  </TablixHeader>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                  <Visibility>
+                                    <ToggleItem>weekDate2</ToggleItem>
+                                  </Visibility>
+                                  <DataElementOutput>Output</DataElementOutput>
+                                </TablixMember>
+                                <TablixMember>
+                                  <TablixHeader>
+                                    <Size>1in</Size>
+                                    <CellContents>
+                                      <Textbox Name="Textbox140">
+                                        <CanGrow>true</CanGrow>
+                                        <KeepTogether>true</KeepTogether>
+                                        <Paragraphs>
+                                          <Paragraph>
+                                            <TextRuns>
+                                              <TextRun>
+                                                <Value>Total Weekly</Value>
+                                                <Style>
+                                                  <FontFamily>Tahoma</FontFamily>
+                                                  <FontWeight>Bold</FontWeight>
+                                                  <Color>White</Color>
+                                                </Style>
+                                              </TextRun>
+                                            </TextRuns>
+                                            <Style />
+                                          </Paragraph>
+                                        </Paragraphs>
+                                        <rd:DefaultName>Textbox137</rd:DefaultName>
+                                        <Style>
+                                          <Border>
+                                            <Color>LightGrey</Color>
+                                            <Style>Solid</Style>
+                                          </Border>
+                                          <BackgroundColor>#8fa0b0</BackgroundColor>
+                                          <PaddingLeft>2pt</PaddingLeft>
+                                          <PaddingRight>2pt</PaddingRight>
+                                          <PaddingTop>2pt</PaddingTop>
+                                          <PaddingBottom>2pt</PaddingBottom>
+                                        </Style>
+                                      </Textbox>
+                                    </CellContents>
+                                  </TablixHeader>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                  <KeepWithGroup>Before</KeepWithGroup>
+                                </TablixMember>
+                              </TablixMembers>
+                              <Visibility>
+                                <ToggleItem>MonthDate2</ToggleItem>
+                              </Visibility>
+                              <DataElementOutput>Output</DataElementOutput>
+                            </TablixMember>
+                            <TablixMember>
+                              <TablixHeader>
+                                <Size>1in</Size>
+                                <CellContents>
+                                  <Textbox Name="Textbox86">
+                                    <CanGrow>true</CanGrow>
+                                    <KeepTogether>true</KeepTogether>
+                                    <Paragraphs>
+                                      <Paragraph>
+                                        <TextRuns>
+                                          <TextRun>
+                                            <Value>Total Monthly</Value>
+                                            <Style>
+                                              <FontFamily>Tahoma</FontFamily>
+                                              <FontWeight>Bold</FontWeight>
+                                              <Color>White</Color>
+                                            </Style>
+                                          </TextRun>
+                                        </TextRuns>
+                                        <Style />
+                                      </Paragraph>
+                                    </Paragraphs>
+                                    <rd:DefaultName>Textbox82</rd:DefaultName>
+                                    <Style>
+                                      <Border>
+                                        <Color>LightGrey</Color>
+                                        <Style>Solid</Style>
+                                      </Border>
+                                      <BackgroundColor>#8fa0b0</BackgroundColor>
+                                      <PaddingLeft>2pt</PaddingLeft>
+                                      <PaddingRight>2pt</PaddingRight>
+                                      <PaddingTop>2pt</PaddingTop>
+                                      <PaddingBottom>2pt</PaddingBottom>
+                                    </Style>
+                                  </Textbox>
+                                </CellContents>
+                              </TablixHeader>
+                              <TablixMembers>
+                                <TablixMember>
+                                  <TablixHeader>
+                                    <Size>1in</Size>
+                                    <CellContents>
+                                      <Textbox Name="Textbox87">
+                                        <CanGrow>true</CanGrow>
+                                        <KeepTogether>true</KeepTogether>
+                                        <Paragraphs>
+                                          <Paragraph>
+                                            <TextRuns>
+                                              <TextRun>
+                                                <Value />
+                                                <Style>
+                                                  <FontFamily>Tahoma</FontFamily>
+                                                  <FontWeight>Bold</FontWeight>
+                                                  <Color>White</Color>
+                                                </Style>
+                                              </TextRun>
+                                            </TextRuns>
+                                            <Style />
+                                          </Paragraph>
+                                        </Paragraphs>
+                                        <rd:DefaultName>Textbox83</rd:DefaultName>
+                                        <Style>
+                                          <Border>
+                                            <Color>LightGrey</Color>
+                                            <Style>Solid</Style>
+                                          </Border>
+                                          <BackgroundColor>#8fa0b0</BackgroundColor>
+                                          <PaddingLeft>2pt</PaddingLeft>
+                                          <PaddingRight>2pt</PaddingRight>
+                                          <PaddingTop>2pt</PaddingTop>
+                                          <PaddingBottom>2pt</PaddingBottom>
+                                        </Style>
+                                      </Textbox>
+                                    </CellContents>
+                                  </TablixHeader>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                </TablixMember>
+                              </TablixMembers>
+                              <KeepWithGroup>Before</KeepWithGroup>
+                            </TablixMember>
+                          </TablixMembers>
+                          <Visibility>
+                            <ToggleItem>QuarterDate2</ToggleItem>
+                          </Visibility>
+                          <DataElementOutput>Output</DataElementOutput>
+                        </TablixMember>
+                        <TablixMember>
+                          <TablixHeader>
+                            <Size>1in</Size>
+                            <CellContents>
+                              <Textbox Name="Textbox27">
+                                <CanGrow>true</CanGrow>
+                                <KeepTogether>true</KeepTogether>
+                                <Paragraphs>
+                                  <Paragraph>
+                                    <TextRuns>
+                                      <TextRun>
+                                        <Value>Total Quarterly</Value>
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>White</Color>
+                                        </Style>
+                                      </TextRun>
+                                    </TextRuns>
+                                    <Style />
+                                  </Paragraph>
+                                </Paragraphs>
+                                <rd:DefaultName>Textbox14</rd:DefaultName>
+                                <Style>
+                                  <Border>
+                                    <Color>LightGrey</Color>
+                                    <Style>Solid</Style>
+                                  </Border>
+                                  <BackgroundColor>#8fa0b0</BackgroundColor>
+                                  <PaddingLeft>2pt</PaddingLeft>
+                                  <PaddingRight>2pt</PaddingRight>
+                                  <PaddingTop>2pt</PaddingTop>
+                                  <PaddingBottom>2pt</PaddingBottom>
+                                </Style>
+                              </Textbox>
+                            </CellContents>
+                          </TablixHeader>
+                          <TablixMembers>
+                            <TablixMember>
+                              <TablixHeader>
+                                <Size>1in</Size>
+                                <CellContents>
+                                  <Textbox Name="Textbox28">
+                                    <CanGrow>true</CanGrow>
+                                    <KeepTogether>true</KeepTogether>
+                                    <Paragraphs>
+                                      <Paragraph>
+                                        <TextRuns>
+                                          <TextRun>
+                                            <Value />
+                                            <Style>
+                                              <FontFamily>Tahoma</FontFamily>
+                                              <FontWeight>Bold</FontWeight>
+                                              <Color>White</Color>
+                                            </Style>
+                                          </TextRun>
+                                        </TextRuns>
+                                        <Style />
+                                      </Paragraph>
+                                    </Paragraphs>
+                                    <rd:DefaultName>Textbox15</rd:DefaultName>
+                                    <Style>
+                                      <Border>
+                                        <Color>LightGrey</Color>
+                                        <Style>Solid</Style>
+                                      </Border>
+                                      <BackgroundColor>#8fa0b0</BackgroundColor>
+                                      <PaddingLeft>2pt</PaddingLeft>
+                                      <PaddingRight>2pt</PaddingRight>
+                                      <PaddingTop>2pt</PaddingTop>
+                                      <PaddingBottom>2pt</PaddingBottom>
+                                    </Style>
+                                  </Textbox>
+                                </CellContents>
+                              </TablixHeader>
+                              <TablixMembers>
+                                <TablixMember>
+                                  <TablixHeader>
+                                    <Size>1in</Size>
+                                    <CellContents>
+                                      <Textbox Name="Textbox29">
+                                        <CanGrow>true</CanGrow>
+                                        <KeepTogether>true</KeepTogether>
+                                        <Paragraphs>
+                                          <Paragraph>
+                                            <TextRuns>
+                                              <TextRun>
+                                                <Value />
+                                                <Style>
+                                                  <FontFamily>Tahoma</FontFamily>
+                                                  <FontWeight>Bold</FontWeight>
+                                                  <Color>White</Color>
+                                                </Style>
+                                              </TextRun>
+                                            </TextRuns>
+                                            <Style />
+                                          </Paragraph>
+                                        </Paragraphs>
+                                        <rd:DefaultName>Textbox16</rd:DefaultName>
+                                        <Style>
+                                          <Border>
+                                            <Color>LightGrey</Color>
+                                            <Style>Solid</Style>
+                                          </Border>
+                                          <BackgroundColor>#8fa0b0</BackgroundColor>
+                                          <PaddingLeft>2pt</PaddingLeft>
+                                          <PaddingRight>2pt</PaddingRight>
+                                          <PaddingTop>2pt</PaddingTop>
+                                          <PaddingBottom>2pt</PaddingBottom>
+                                        </Style>
+                                      </Textbox>
+                                    </CellContents>
+                                  </TablixHeader>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                </TablixMember>
+                              </TablixMembers>
+                            </TablixMember>
+                          </TablixMembers>
+                          <KeepWithGroup>Before</KeepWithGroup>
+                        </TablixMember>
+                      </TablixMembers>
+                      <Visibility>
+                        <ToggleItem>yearDate2</ToggleItem>
+                      </Visibility>
+                      <DataElementOutput>Output</DataElementOutput>
+                    </TablixMember>
+                    <TablixMember>
+                      <TablixHeader>
+                        <Size>1in</Size>
+                        <CellContents>
+                          <Textbox Name="Textbox31">
+                            <CanGrow>true</CanGrow>
+                            <KeepTogether>true</KeepTogether>
+                            <Paragraphs>
+                              <Paragraph>
+                                <TextRuns>
+                                  <TextRun>
+                                    <Value>Total Yearly</Value>
+                                    <Style>
+                                      <FontFamily>Tahoma</FontFamily>
+                                      <FontWeight>Bold</FontWeight>
+                                      <Color>White</Color>
+                                    </Style>
+                                  </TextRun>
+                                </TextRuns>
+                                <Style />
+                              </Paragraph>
+                            </Paragraphs>
+                            <rd:DefaultName>Textbox21</rd:DefaultName>
+                            <Style>
+                              <Border>
+                                <Color>LightGrey</Color>
+                                <Style>Solid</Style>
+                              </Border>
+                              <BackgroundColor>SlateGray</BackgroundColor>
+                              <PaddingLeft>2pt</PaddingLeft>
+                              <PaddingRight>2pt</PaddingRight>
+                              <PaddingTop>2pt</PaddingTop>
+                              <PaddingBottom>2pt</PaddingBottom>
+                            </Style>
+                          </Textbox>
+                        </CellContents>
+                      </TablixHeader>
+                      <TablixMembers>
+                        <TablixMember>
+                          <TablixHeader>
+                            <Size>1in</Size>
+                            <CellContents>
+                              <Textbox Name="Textbox32">
+                                <CanGrow>true</CanGrow>
+                                <KeepTogether>true</KeepTogether>
+                                <Paragraphs>
+                                  <Paragraph>
+                                    <TextRuns>
+                                      <TextRun>
+                                        <Value />
+                                        <Style>
+                                          <FontFamily>Tahoma</FontFamily>
+                                          <FontWeight>Bold</FontWeight>
+                                          <Color>White</Color>
+                                        </Style>
+                                      </TextRun>
+                                    </TextRuns>
+                                    <Style />
+                                  </Paragraph>
+                                </Paragraphs>
+                                <rd:DefaultName>Textbox22</rd:DefaultName>
+                                <Style>
+                                  <Border>
+                                    <Color>LightGrey</Color>
+                                    <Style>Solid</Style>
+                                  </Border>
+                                  <BackgroundColor>#8fa0b0</BackgroundColor>
+                                  <PaddingLeft>2pt</PaddingLeft>
+                                  <PaddingRight>2pt</PaddingRight>
+                                  <PaddingTop>2pt</PaddingTop>
+                                  <PaddingBottom>2pt</PaddingBottom>
+                                </Style>
+                              </Textbox>
+                            </CellContents>
+                          </TablixHeader>
+                          <TablixMembers>
+                            <TablixMember>
+                              <TablixHeader>
+                                <Size>1in</Size>
+                                <CellContents>
+                                  <Textbox Name="Textbox33">
+                                    <CanGrow>true</CanGrow>
+                                    <KeepTogether>true</KeepTogether>
+                                    <Paragraphs>
+                                      <Paragraph>
+                                        <TextRuns>
+                                          <TextRun>
+                                            <Value />
+                                            <Style>
+                                              <FontFamily>Tahoma</FontFamily>
+                                              <FontWeight>Bold</FontWeight>
+                                              <Color>White</Color>
+                                            </Style>
+                                          </TextRun>
+                                        </TextRuns>
+                                        <Style />
+                                      </Paragraph>
+                                    </Paragraphs>
+                                    <rd:DefaultName>Textbox23</rd:DefaultName>
+                                    <Style>
+                                      <Border>
+                                        <Color>LightGrey</Color>
+                                        <Style>Solid</Style>
+                                      </Border>
+                                      <BackgroundColor>#8fa0b0</BackgroundColor>
+                                      <PaddingLeft>2pt</PaddingLeft>
+                                      <PaddingRight>2pt</PaddingRight>
+                                      <PaddingTop>2pt</PaddingTop>
+                                      <PaddingBottom>2pt</PaddingBottom>
+                                    </Style>
+                                  </Textbox>
+                                </CellContents>
+                              </TablixHeader>
+                              <TablixMembers>
+                                <TablixMember>
+                                  <TablixHeader>
+                                    <Size>1in</Size>
+                                    <CellContents>
+                                      <Textbox Name="Textbox34">
+                                        <CanGrow>true</CanGrow>
+                                        <KeepTogether>true</KeepTogether>
+                                        <Paragraphs>
+                                          <Paragraph>
+                                            <TextRuns>
+                                              <TextRun>
+                                                <Value />
+                                                <Style>
+                                                  <FontFamily>Tahoma</FontFamily>
+                                                  <FontWeight>Bold</FontWeight>
+                                                  <Color>White</Color>
+                                                </Style>
+                                              </TextRun>
+                                            </TextRuns>
+                                            <Style />
+                                          </Paragraph>
+                                        </Paragraphs>
+                                        <rd:DefaultName>Textbox24</rd:DefaultName>
+                                        <Style>
+                                          <Border>
+                                            <Color>LightGrey</Color>
+                                            <Style>Solid</Style>
+                                          </Border>
+                                          <BackgroundColor>#8fa0b0</BackgroundColor>
+                                          <PaddingLeft>2pt</PaddingLeft>
+                                          <PaddingRight>2pt</PaddingRight>
+                                          <PaddingTop>2pt</PaddingTop>
+                                          <PaddingBottom>2pt</PaddingBottom>
+                                        </Style>
+                                      </Textbox>
+                                    </CellContents>
+                                  </TablixHeader>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                </TablixMember>
+                              </TablixMembers>
+                            </TablixMember>
+                          </TablixMembers>
+                        </TablixMember>
+                      </TablixMembers>
+                      <KeepWithGroup>Before</KeepWithGroup>
+                    </TablixMember>
                   </TablixMembers>
-                  <KeepWithGroup>Before</KeepWithGroup>
+                  <DataElementOutput>Output</DataElementOutput>
                 </TablixMember>
               </TablixMembers>
             </TablixRowHierarchy>
-            <DataSetName>DataSet1</DataSetName>
-            <Top>2.66709in</Top>
-            <Left>4.33333in</Left>
-            <Height>0.76041in</Height>
-            <Width>5.19792in</Width>
+            <RepeatColumnHeaders>true</RepeatColumnHeaders>
+            <RepeatRowHeaders>true</RepeatRowHeaders>
+            <DataSetName>DataSet2</DataSetName>
+            <Top>3.49854in</Top>
+            <Height>1.96in</Height>
+            <Width>7in</Width>
             <ZIndex>2</ZIndex>
-            <Style>
-              <Border>
-                <Style>None</Style>
-              </Border>
-            </Style>
+            <Style />
           </Tablix>
         </ReportItems>
         <Height>6.22958in</Height>
@@ -3149,20 +4153,39 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
   <ReportParameters>
     <ReportParameter Name="FromDate">
       <DataType>DateTime</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>2/28/2017 12:00:00 AM</Value>
+        </Values>
+      </DefaultValue>
       <Prompt>From Date</Prompt>
     </ReportParameter>
     <ReportParameter Name="ToDate">
       <DataType>DateTime</DataType>
-      <Prompt>To Date</Prompt>
-    </ReportParameter>
-    <ReportParameter Name="Yeild">
-      <DataType>Integer</DataType>
       <DefaultValue>
         <Values>
-          <Value>70</Value>
+          <Value>3/27/2017 12:00:00 AM</Value>
         </Values>
       </DefaultValue>
-      <Prompt>Yeild</Prompt>
+      <Prompt>To Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="entranceReason">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <DataSetReference>
+          <DataSetName>Source</DataSetName>
+          <ValueField>sourceName</ValueField>
+        </DataSetReference>
+      </DefaultValue>
+      <Prompt>entrance Reason</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>Source</DataSetName>
+          <ValueField>sourceName</ValueField>
+          <LabelField>sourceName</LabelField>
+        </DataSetReference>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
@@ -3183,7 +4206,7 @@ AND (Fields!EntranceReasonID.Value="13328"),"Red","Black")</Color>
         <CellDefinition>
           <ColumnIndex>0</ColumnIndex>
           <RowIndex>1</RowIndex>
-          <ParameterName>Yeild</ParameterName>
+          <ParameterName>entranceReason</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>

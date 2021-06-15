@@ -22,7 +22,7 @@
         </QueryParameters>
         <CommandText>SELECT     DATEPART(year, assemblyEndTime) AS yearDate, DATEPART(QUARTER, assemblyEndTime) AS QuraterDate, CONVERT(nvarchar(5), DATEPART(month, 
                       assemblyEndTime)) AS MonthDate, DATEPART(week, assemblyEndTime) AS weekDate, CONVERT(date, assemblyEndTime) AS AssemblyDate, id, pumpSN, dateId, 
-                       lineId, line, comments, asseblyEmployee, EntranceReasonID, EntranceReason, NumberOfFailures, PumpType
+                       lineId, line, comments, asseblyEmployee, EntranceReasonID, EntranceReason, NumberOfFailures, PumpType, 1 test
 
 
                   
@@ -95,6 +95,10 @@ WHERE     (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (En
         <Field Name="PumpType">
           <DataField>PumpType</DataField>
           <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="test">
+          <DataField>test</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
       </Fields>
     </DataSet>
@@ -285,13 +289,43 @@ WHERE     (CONVERT(date, assemblyEndTime) BETWEEN @FromDate AND @ToDate) AND (En
             <Top>1.28in</Top>
             <Left>2.18625in</Left>
             <Height>1.48958in</Height>
-            <Width>4.60417in</Width>
+            <Width>4.60416in</Width>
             <Style>
               <Border>
                 <Style>None</Style>
               </Border>
             </Style>
           </Tablix>
+          <Textbox Name="test">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=Sum(Fields!test.Value, "DataSet1")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>test</rd:DefaultName>
+            <Top>0.64111in</Top>
+            <Left>2.05083in</Left>
+            <Height>0.25in</Height>
+            <Width>1in</Width>
+            <ZIndex>1</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
         </ReportItems>
         <Height>4.18625in</Height>
         <Style />

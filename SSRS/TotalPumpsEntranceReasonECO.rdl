@@ -16,14 +16,11 @@
           <QueryParameter Name="@entrancereason">
             <Value>=Parameters!entrancereason.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@pumpType">
-            <Value>=Parameters!pumpType.Value</Value>
+          <QueryParameter Name="@FromDate">
+            <Value>=Parameters!FromDate.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@Assemblydate">
-            <Value>=Parameters!Assemblydate.Value</Value>
-          </QueryParameter>
-          <QueryParameter Name="@line">
-            <Value>=Parameters!line.Value</Value>
+          <QueryParameter Name="@ToDate">
+            <Value>=Parameters!ToDate.Value</Value>
           </QueryParameter>
         </QueryParameters>
         <CommandText>SELECT DATEPART(year, assemblyEndTime) AS yearDate, DATEPART(QUARTER, assemblyEndTime) AS QuraterDate, CONVERT(nvarchar(5), DATEPART(month, 
@@ -32,8 +29,9 @@
                       assemblyStartTime) AS Expr2, PumpType
                    
 FROM         dwh_fact_ProductionAssembly
-WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
- and PumpType in (@pumpType)
+WHERE   comments like '%144%' AND
+
+CONVERT(date, assemblyEndTime) between @FromDate and @ToDate
  and EntranceReason in (@entrancereason)</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
@@ -70,13 +68,13 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
           <DataField>dateId</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="lineId">
-          <DataField>lineId</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
         <Field Name="Expr1">
           <DataField>Expr1</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="lineId">
+          <DataField>lineId</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="line">
           <DataField>line</DataField>
@@ -208,7 +206,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox7">
+                        <Textbox Name="Textbox6">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -227,7 +225,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox7</rd:DefaultName>
+                          <rd:DefaultName>Textbox6</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -319,7 +317,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox8">
+                        <Textbox Name="Textbox7">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -337,7 +335,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox8</rd:DefaultName>
+                          <rd:DefaultName>Textbox7</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -467,36 +465,127 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
             <TablixRowHierarchy>
               <TablixMembers>
                 <TablixMember>
+                  <TablixHeader>
+                    <Size>1in</Size>
+                    <CellContents>
+                      <Textbox Name="Textbox8">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>Pump Type</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontSize>11pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style />
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Textbox8</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>SteelBlue</BackgroundColor>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <KeepTogether>true</KeepTogether>
+                    </TablixMember>
+                  </TablixMembers>
                   <KeepWithGroup>After</KeepWithGroup>
                   <RepeatOnNewPage>true</RepeatOnNewPage>
-                  <KeepTogether>true</KeepTogether>
                 </TablixMember>
                 <TablixMember>
-                  <Group Name="table1_EntranceReason">
+                  <Group Name="PumpType">
                     <GroupExpressions>
-                      <GroupExpression>=Fields!EntranceReason.Value</GroupExpression>
+                      <GroupExpression>=Fields!PumpType.Value</GroupExpression>
                     </GroupExpressions>
                   </Group>
                   <SortExpressions>
                     <SortExpression>
-                      <Value>=Fields!EntranceReason.Value</Value>
+                      <Value>=Fields!PumpType.Value</Value>
                     </SortExpression>
                   </SortExpressions>
+                  <TablixHeader>
+                    <Size>1in</Size>
+                    <CellContents>
+                      <Textbox Name="PumpType">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!PumpType.Value</Value>
+                                <Style>
+                                  <FontFamily>Tahoma</FontFamily>
+                                  <FontWeight>Bold</FontWeight>
+                                  <Color>White</Color>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style />
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>PumpType</rd:DefaultName>
+                        <Style>
+                          <Border>
+                            <Color>LightGrey</Color>
+                            <Style>Solid</Style>
+                          </Border>
+                          <BackgroundColor>#6e9eca</BackgroundColor>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
                   <TablixMembers>
                     <TablixMember>
-                      <KeepWithGroup>After</KeepWithGroup>
-                      <KeepTogether>true</KeepTogether>
-                    </TablixMember>
-                    <TablixMember>
-                      <Group Name="table1_Details_Group">
-                        <DataElementName>Detail</DataElementName>
+                      <Group Name="table1_EntranceReason">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!EntranceReason.Value</GroupExpression>
+                        </GroupExpressions>
                       </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!EntranceReason.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
                       <TablixMembers>
-                        <TablixMember />
+                        <TablixMember>
+                          <KeepWithGroup>After</KeepWithGroup>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                        <TablixMember>
+                          <Group Name="table1_Details_Group">
+                            <DataElementName>Detail</DataElementName>
+                          </Group>
+                          <TablixMembers>
+                            <TablixMember />
+                          </TablixMembers>
+                          <DataElementName>Detail_Collection</DataElementName>
+                          <DataElementOutput>Output</DataElementOutput>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
                       </TablixMembers>
-                      <DataElementName>Detail_Collection</DataElementName>
-                      <DataElementOutput>Output</DataElementOutput>
-                      <KeepTogether>true</KeepTogether>
                     </TablixMember>
                   </TablixMembers>
                 </TablixMember>
@@ -505,7 +594,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
             <DataSetName>DataSet1</DataSetName>
             <Top>0.36in</Top>
             <Height>0.64in</Height>
-            <Width>3in</Width>
+            <Width>4in</Width>
             <Style />
           </Tablix>
           <Textbox Name="textbox1">
@@ -516,6 +605,20 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                 <TextRuns>
                   <TextRun>
                     <Value>Pumps List</Value>
+                    <Style>
+                      <FontFamily>Tahoma</FontFamily>
+                      <FontSize>20pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                      <Color>SteelBlue</Color>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value />
                     <Style>
                       <FontFamily>Tahoma</FontFamily>
                       <FontSize>20pt</FontSize>
@@ -539,10 +642,10 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
             </Style>
           </Textbox>
         </ReportItems>
-        <Height>2.98833in</Height>
+        <Height>1in</Height>
         <Style />
       </Body>
-      <Width>7.125in</Width>
+      <Width>5in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -558,23 +661,13 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
       <Prompt>entrancereason</Prompt>
       <UsedInQuery>True</UsedInQuery>
     </ReportParameter>
-    <ReportParameter Name="line">
-      <DataType>String</DataType>
-      <Nullable>true</Nullable>
-      <AllowBlank>true</AllowBlank>
-      <Prompt>line</Prompt>
-      <UsedInQuery>True</UsedInQuery>
-    </ReportParameter>
-    <ReportParameter Name="pumpType">
-      <DataType>String</DataType>
-      <Nullable>true</Nullable>
-      <AllowBlank>true</AllowBlank>
-      <Prompt>pump Type</Prompt>
-      <UsedInQuery>True</UsedInQuery>
-    </ReportParameter>
-    <ReportParameter Name="Assemblydate">
+    <ReportParameter Name="ToDate">
       <DataType>DateTime</DataType>
-      <Prompt>Assemblydate</Prompt>
+      <Prompt>To Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="FromDate">
+      <DataType>DateTime</DataType>
+      <Prompt>From Date</Prompt>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
@@ -588,19 +681,14 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
           <ParameterName>entrancereason</ParameterName>
         </CellDefinition>
         <CellDefinition>
-          <ColumnIndex>1</ColumnIndex>
-          <RowIndex>0</RowIndex>
-          <ParameterName>line</ParameterName>
-        </CellDefinition>
-        <CellDefinition>
           <ColumnIndex>0</ColumnIndex>
           <RowIndex>1</RowIndex>
-          <ParameterName>pumpType</ParameterName>
+          <ParameterName>FromDate</ParameterName>
         </CellDefinition>
         <CellDefinition>
           <ColumnIndex>1</ColumnIndex>
-          <RowIndex>1</RowIndex>
-          <ParameterName>Assemblydate</ParameterName>
+          <RowIndex>0</RowIndex>
+          <ParameterName>ToDate</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>

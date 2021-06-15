@@ -13,101 +13,90 @@
       <Query>
         <DataSourceName>RPTSRV</DataSourceName>
         <QueryParameters>
-          <QueryParameter Name="@entrancereason">
-            <Value>=Parameters!entrancereason.Value</Value>
+          <QueryParameter Name="@FtpPassFail">
+            <Value>=Parameters!FtpPassFail.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@pumpType">
-            <Value>=Parameters!pumpType.Value</Value>
+          <QueryParameter Name="@FtpDate">
+            <Value>=Parameters!FtpDate.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@Assemblydate">
-            <Value>=Parameters!Assemblydate.Value</Value>
+          <QueryParameter Name="@PumpType">
+            <Value>=Parameters!PumpType.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@line">
-            <Value>=Parameters!line.Value</Value>
+          <QueryParameter Name="@entranceReason">
+            <Value>=Parameters!entranceReason.Value(0)</Value>
           </QueryParameter>
         </QueryParameters>
-        <CommandText>SELECT DATEPART(year, assemblyEndTime) AS yearDate, DATEPART(QUARTER, assemblyEndTime) AS QuraterDate, CONVERT(nvarchar(5), DATEPART(month, 
-                      assemblyEndTime)) AS MonthDate, DATEPART(week, assemblyEndTime) AS weekDate, CONVERT(date, assemblyEndTime) AS AssemblyDate, id, pumpSN, dateId, 
-                      CONVERT(date, assemblyEndTime) AS Expr1, lineId, line, comments, asseblyEmployee, EntranceReasonID, EntranceReason, NumberOfFailures, CONVERT(date, 
-                      assemblyStartTime) AS Expr2, PumpType
-                   
-FROM         dwh_fact_ProductionAssembly
-WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
- and PumpType in (@pumpType)
- and EntranceReason in (@entrancereason)</CommandText>
+        <CommandText>SELECT        YEAR(FF.ftpEndTime) AS 'YearDate', DATEPART(QUARTER, FF.ftpEndTime) AS 'QuarterDate', MONTH(FF.ftpEndTime) AS 'MonthDate', MAX(DATEPART(week, FF.ftpEndTime)) AS 'WeekDate', MAX(CONVERT(date, 
+                         FF.ftpEndTime)) AS 'FtpDate', FF.pumpSN, pt.pumpTypeName AS 'PumpType', FF.ftpPassFail AS 'Pass/Fail', MAX(FF.ftpId) AS ftpid, S.sourceName AS 'EntranceReason'
+FROM            dwh_fact_Ftp AS FF LEFT OUTER JOIN
+                         dwh_dim_PumpType AS pt ON FF.PumpType = pt.PumpTypeId LEFT OUTER JOIN
+                         dwh_dim_Source AS S ON FF.sourceId = S.sourceId
+WHERE        (FF.ftpPassFail &lt;&gt; '2')
+--and pt.pumptypename='Generic Sapphire' 
+and FF.ftpPassFail=@FtpPassFail and CONVERT(date, 
+                         FF.ftpEndTime)=@FtpDate
+and pt.pumptypename in (@PumpType)
+and sourceName in (@entranceReason)
+GROUP BY YEAR(FF.ftpEndTime), DATEPART(QUARTER, FF.ftpEndTime), MONTH(FF.ftpEndTime), FF.pumpSN, pt.pumpTypeName, FF.ftpPassFail, S.sourceName
+ORDER BY 'FtpDate', FF.pumpSN</CommandText>
         <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
       </Query>
       <Fields>
         <Field Name="yearDate">
-          <DataField>yearDate</DataField>
+          <DataField>YearDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="QuraterDate">
-          <DataField>QuraterDate</DataField>
+        <Field Name="QuarterDate">
+          <DataField>QuarterDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="MonthDate">
           <DataField>MonthDate</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
+          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="weekDate">
-          <DataField>weekDate</DataField>
+          <DataField>WeekDate</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="AssemblyDate">
-          <DataField>AssemblyDate</DataField>
+        <Field Name="FtpDate">
+          <DataField>FtpDate</DataField>
           <rd:TypeName>System.DateTime</rd:TypeName>
-        </Field>
-        <Field Name="id">
-          <DataField>id</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="pumpSN">
           <DataField>pumpSN</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="dateId">
-          <DataField>dateId</DataField>
+        <Field Name="Pass_Fail">
+          <DataField>Pass/Fail</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
-        <Field Name="lineId">
-          <DataField>lineId</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="Expr1">
-          <DataField>Expr1</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
-        </Field>
-        <Field Name="line">
-          <DataField>line</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="comments">
-          <DataField>comments</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="asseblyEmployee">
-          <DataField>asseblyEmployee</DataField>
-          <rd:TypeName>System.String</rd:TypeName>
-        </Field>
-        <Field Name="EntranceReasonID">
-          <DataField>EntranceReasonID</DataField>
+        <Field Name="ftpid">
+          <DataField>ftpid</DataField>
           <rd:TypeName>System.Int32</rd:TypeName>
         </Field>
         <Field Name="EntranceReason">
           <DataField>EntranceReason</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
-        <Field Name="NumberOfFailures">
-          <DataField>NumberOfFailures</DataField>
-          <rd:TypeName>System.Int32</rd:TypeName>
-        </Field>
-        <Field Name="Expr2">
-          <DataField>Expr2</DataField>
-          <rd:TypeName>System.DateTime</rd:TypeName>
-        </Field>
         <Field Name="PumpType">
           <DataField>PumpType</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="DataSet2">
+      <Query>
+        <DataSourceName>RPTSRV</DataSourceName>
+        <CommandText>SELECT        sourceId, sourceName
+FROM            dwh_dim_Source</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="sourceId">
+          <DataField>sourceId</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="sourceName">
+          <DataField>sourceName</DataField>
           <rd:TypeName>System.String</rd:TypeName>
         </Field>
       </Fields>
@@ -172,7 +161,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox4">
+                        <Textbox Name="Textbox9">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -191,7 +180,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox4</rd:DefaultName>
+                          <rd:DefaultName>Textbox9</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -284,7 +273,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="textbox5">
+                        <Textbox Name="Textbox10">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
@@ -302,7 +291,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                               <Style />
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>textbox5</rd:DefaultName>
+                          <rd:DefaultName>Textbox10</rd:DefaultName>
                           <Style>
                             <Border>
                               <Color>LightGrey</Color>
@@ -430,7 +419,7 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!comments.Value</Value>
+                                  <Value />
                                   <Style>
                                     <FontFamily>Tahoma</FontFamily>
                                   </Style>
@@ -538,11 +527,131 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
               <PaddingBottom>2pt</PaddingBottom>
             </Style>
           </Textbox>
+          <Textbox Name="FtpDate">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=Parameters!FtpDate.Value</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>FtpDate</rd:DefaultName>
+            <Top>1.24875in</Top>
+            <Left>5.51958in</Left>
+            <Height>0.25in</Height>
+            <Width>1in</Width>
+            <ZIndex>2</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="FtpPassFail">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=Parameters!FtpPassFail.Value</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>FtpPassFail</rd:DefaultName>
+            <Top>1.24875in</Top>
+            <Left>3.31125in</Left>
+            <Height>0.25in</Height>
+            <Width>1in</Width>
+            <ZIndex>3</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="entranceReason">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=Parameters!entranceReason.Value</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>entranceReason</rd:DefaultName>
+            <Top>1.24875in</Top>
+            <Left>4.45014in</Left>
+            <Height>0.25in</Height>
+            <Width>1in</Width>
+            <ZIndex>4</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="PumpType">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=Parameters!PumpType.Value</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>PumpType</rd:DefaultName>
+            <Top>1.5925in</Top>
+            <Left>3.31125in</Left>
+            <Height>0.25in</Height>
+            <Width>1in</Width>
+            <ZIndex>5</ZIndex>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
         </ReportItems>
         <Height>2.98833in</Height>
         <Style />
       </Body>
-      <Width>7.125in</Width>
+      <Width>7.31125in</Width>
       <Page>
         <LeftMargin>1in</LeftMargin>
         <RightMargin>1in</RightMargin>
@@ -553,28 +662,29 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
     </ReportSection>
   </ReportSections>
   <ReportParameters>
-    <ReportParameter Name="entrancereason">
-      <DataType>String</DataType>
-      <Prompt>entrancereason</Prompt>
-      <UsedInQuery>True</UsedInQuery>
-    </ReportParameter>
-    <ReportParameter Name="line">
-      <DataType>String</DataType>
-      <Nullable>true</Nullable>
-      <AllowBlank>true</AllowBlank>
-      <Prompt>line</Prompt>
-      <UsedInQuery>True</UsedInQuery>
-    </ReportParameter>
-    <ReportParameter Name="pumpType">
-      <DataType>String</DataType>
-      <Nullable>true</Nullable>
-      <AllowBlank>true</AllowBlank>
-      <Prompt>pump Type</Prompt>
-      <UsedInQuery>True</UsedInQuery>
-    </ReportParameter>
-    <ReportParameter Name="Assemblydate">
+    <ReportParameter Name="FtpDate">
       <DataType>DateTime</DataType>
-      <Prompt>Assemblydate</Prompt>
+      <Prompt>Ftp Date</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="FtpPassFail">
+      <DataType>Integer</DataType>
+      <Prompt>Ftp Pass Fail</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="entranceReason">
+      <DataType>String</DataType>
+      <Prompt>entrance Reason</Prompt>
+      <ValidValues>
+        <DataSetReference>
+          <DataSetName>DataSet2</DataSetName>
+          <ValueField>sourceName</ValueField>
+          <LabelField>sourceName</LabelField>
+        </DataSetReference>
+      </ValidValues>
+      <MultiValue>true</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="PumpType">
+      <DataType>String</DataType>
+      <Prompt>Pump Type</Prompt>
     </ReportParameter>
   </ReportParameters>
   <ReportParametersLayout>
@@ -583,24 +693,24 @@ WHERE   CONVERT(date, assemblyEndTime)=@Assemblydate and line=@line
       <NumberOfRows>2</NumberOfRows>
       <CellDefinitions>
         <CellDefinition>
-          <ColumnIndex>0</ColumnIndex>
-          <RowIndex>0</RowIndex>
-          <ParameterName>entrancereason</ParameterName>
-        </CellDefinition>
-        <CellDefinition>
           <ColumnIndex>1</ColumnIndex>
           <RowIndex>0</RowIndex>
-          <ParameterName>line</ParameterName>
+          <ParameterName>FtpPassFail</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>FtpDate</ParameterName>
         </CellDefinition>
         <CellDefinition>
           <ColumnIndex>0</ColumnIndex>
           <RowIndex>1</RowIndex>
-          <ParameterName>pumpType</ParameterName>
+          <ParameterName>entranceReason</ParameterName>
         </CellDefinition>
         <CellDefinition>
           <ColumnIndex>1</ColumnIndex>
           <RowIndex>1</RowIndex>
-          <ParameterName>Assemblydate</ParameterName>
+          <ParameterName>PumpType</ParameterName>
         </CellDefinition>
       </CellDefinitions>
     </GridLayoutDefinition>

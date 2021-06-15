@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RptDataSource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="Sorrel">
+  <ConnectionProperties>
+    <Extension>SQL</Extension>
+    <ConnectString>Data Source=SAP;Initial Catalog=SorrelDB</ConnectString>
+  </ConnectionProperties>
+  <DataSourceID>d20eea8b-c506-409c-be3a-43afedff530d</DataSourceID>
+</RptDataSource>
